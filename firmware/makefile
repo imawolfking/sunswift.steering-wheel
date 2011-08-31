@@ -1,11 +1,11 @@
 #directory definitions
-ROOT = ../../..
+ROOT = ../
 SCANDAL = $(ROOT)/scandal
 ARCH = $(SCANDAL)/src/arch/lpc11c14
-UTILS = $(ROOT)/utils
+UTILS = ../../$(ROOT)/utils
 LINKER = $(ARCH)/linker
 CMSIS = $(ARCH)/cmsis
-DRIVERS = $(ARCH)/driver
+DRIVERS = $(ARCH)/drivers
 STARTUP = $(ARCH)/startup
 BUILD=./build# never . or clean will delete everything
 SRC = ./src

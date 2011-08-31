@@ -138,7 +138,7 @@ END GROUP
                 0x00007000                __top_MFlash32 = 0x7000
                 0x10002000                __top_RamLoc8 = 0x10002000
 
-.text           0x00000000     0x25dc
+.text           0x00000000     0x25a0
  FILL mask 0xff
  *(.isr_vector)
  .isr_vector    0x00000000       0xc0 ./build/cr_startup_lpc11.o
@@ -213,158 +213,156 @@ END GROUP
                 0x0000164c                I2CStop
                 0x00001668                I2CEngine
                 0x000016b4                I2CInit
- .text          0x00001720       0xdc ./build/flash.o
+ .text          0x00001720       0xcc ./build/flash.o
                 0x00001720                sc_init_eeprom
                 0x00001722                sc_user_eeprom_read_block
                 0x00001724                sc_user_eeprom_write_block
                 0x00001726                sc_write_conf
-                0x000017e8                sc_read_conf
- .text          0x000017fc      0x468 ./build/engine.o
-                0x000017fc                scandal_get_m
-                0x0000180c                scandal_get_b
-                0x0000181c                scandal_register_in_channel_handler
-                0x00001828                scandal_get_in_channel_value
-                0x00001838                scandal_get_in_channel_rcvd_time
-                0x0000184c                scandal_get_in_channel_time
-                0x00001860                scandal_in_channel_is_valid
-                0x00001878                scandal_get_in_channel
-                0x00001888                scandal_get_addr
-                0x00001894                scandal_get_mac
-                0x00001898                scandal_get_msg_type
-                0x000018a0                scandal_get_msg_priority
-                0x000018ac                getconfig
-                0x000018c0                scandal_handle_command
-                0x000018e4                scandal_handle_timesync
-                0x0000192c                scandal_handle_channel
-                0x000019a0                scandal_handle_reset
-                0x000019bc                scandal_handle_config
-                0x00001a64                scandal_set_b
-                0x00001a7c                scandal_set_m
-                0x00001a94                scandal_handle_user_config
-                0x00001ae0                do_first_run
-                0x00001b08                handle_message
-                0x00001b58                handle_scandal
-                0x00001ba4                scandal_init
- .text          0x00001c64       0x54 ./build/error.o
-                0x00001c64                scandal_get_last_scandal_error
-                0x00001c70                scandal_get_last_user_error
-                0x00001c7c                scandal_get_num_errors
-                0x00001c88                do_fatal_error
-                0x00001c8a                scandal_do_user_err
-                0x00001ca0                scandal_do_scandal_err
- .text          0x00001cb8       0x82 ./build/maths.o
-                0x00001cb8                scandal_div32
-                0x00001cde                scandal_div64
- *fill*         0x00001d3a        0x2 00
- .text          0x00001d3c      0x238 ./build/message.o
-                0x00001d3c                scandal_send_timesync
-                0x00001d7e                scandal_send_reset
-                0x00001dc4                scandal_send_user_config
-                0x00001e1a                scandal_send_user_error
-                0x00001e5c                scandal_send_scandal_error
-                0x00001e9c                scandal_build_heartbeat_msg
-                0x00001ef0                scandal_send_channel_with_timestamp
-                0x00001f3e                scandal_send_heartbeat
- .text          0x00001f74      0x238 ./build/utils.o
-                0x00001f74                scandal_naive_delay
-                0x00001f8c                scandal_get_scaled64_value
-                0x00001fce                scandal_get_unscaled_value
-                0x00001ff6                scandal_get_scaled_value
-                0x00002016                scandal_get_scaleaverage64
-                0x0000207e                scandal_integrate_trapz64
-                0x000020bc                scandal_delay
-                0x000020d2                scandal_ms_delay
-                0x00002120                scandal_send_scaled_channel
-                0x00002140                scandal_get_scaleaverage
-                0x0000216c                scandal_send_scaleaverage_channel
-                0x0000218a                scandal_integrate_trapz32
- .text          0x000021ac       0x5c ./build/cr_startup_lpc11.o
-                0x000021ac                NMI_Handler
-                0x000021b0                HardFault_Handler
-                0x000021b4                SVCall_Handler
-                0x000021b8                PendSV_Handler
-                0x000021bc                SysTick_Handler
-                0x000021c0                TIMER16_0_IRQHandler
-                0x000021c0                TIMER32_1_IRQHandler
-                0x000021c0                IntDefaultHandler
-                0x000021c0                PIOINT1_IRQHandler
-                0x000021c0                SSP0_IRQHandler
-                0x000021c0                TIMER16_1_IRQHandler
-                0x000021c0                ADC_IRQHandler
-                0x000021c0                SSP1_IRQHandler
-                0x000021c0                PIOINT2_IRQHandler
-                0x000021c0                BOD_IRQHandler
-                0x000021c0                WAKEUP_IRQHandler
-                0x000021c0                PIOINT0_IRQHandler
-                0x000021c0                WDT_IRQHandler
-                0x000021c0                PIOINT3_IRQHandler
-                0x000021c4                ResetISR
- .text.memcpy   0x00002208        0x8 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/armv6-m/libcr_c.a(memcpy.o)
-                0x00002208                memcpy
- .text.memset   0x00002210        0x8 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/armv6-m/libcr_c.a(memset.o)
-                0x00002210                memset
+                0x000017d8                sc_read_conf
+ .text          0x000017ec      0x468 ./build/engine.o
+                0x000017ec                scandal_get_m
+                0x000017fc                scandal_get_b
+                0x0000180c                scandal_register_in_channel_handler
+                0x00001818                scandal_get_in_channel_value
+                0x00001828                scandal_get_in_channel_rcvd_time
+                0x0000183c                scandal_get_in_channel_time
+                0x00001850                scandal_in_channel_is_valid
+                0x00001868                scandal_get_in_channel
+                0x00001878                scandal_get_addr
+                0x00001884                scandal_get_mac
+                0x00001888                scandal_get_msg_type
+                0x00001890                scandal_get_msg_priority
+                0x0000189c                getconfig
+                0x000018b0                scandal_handle_command
+                0x000018d4                scandal_handle_timesync
+                0x0000191c                scandal_handle_channel
+                0x00001990                scandal_handle_reset
+                0x000019ac                scandal_handle_config
+                0x00001a54                scandal_set_b
+                0x00001a6c                scandal_set_m
+                0x00001a84                scandal_handle_user_config
+                0x00001ad0                do_first_run
+                0x00001af8                handle_message
+                0x00001b48                handle_scandal
+                0x00001b94                scandal_init
+ .text          0x00001c54       0x54 ./build/error.o
+                0x00001c54                scandal_get_last_scandal_error
+                0x00001c60                scandal_get_last_user_error
+                0x00001c6c                scandal_get_num_errors
+                0x00001c78                do_fatal_error
+                0x00001c7a                scandal_do_user_err
+                0x00001c90                scandal_do_scandal_err
+ .text          0x00001ca8       0x82 ./build/maths.o
+                0x00001ca8                scandal_div32
+                0x00001cce                scandal_div64
+ *fill*         0x00001d2a        0x2 00
+ .text          0x00001d2c      0x238 ./build/message.o
+                0x00001d2c                scandal_send_timesync
+                0x00001d6e                scandal_send_reset
+                0x00001db4                scandal_send_user_config
+                0x00001e0a                scandal_send_user_error
+                0x00001e4c                scandal_send_scandal_error
+                0x00001e8c                scandal_build_heartbeat_msg
+                0x00001ee0                scandal_send_channel_with_timestamp
+                0x00001f2e                scandal_send_heartbeat
+ .text          0x00001f64      0x238 ./build/utils.o
+                0x00001f64                scandal_naive_delay
+                0x00001f7c                scandal_get_scaled64_value
+                0x00001fbe                scandal_get_unscaled_value
+                0x00001fe6                scandal_get_scaled_value
+                0x00002006                scandal_get_scaleaverage64
+                0x0000206e                scandal_integrate_trapz64
+                0x000020ac                scandal_delay
+                0x000020c2                scandal_ms_delay
+                0x00002110                scandal_send_scaled_channel
+                0x00002130                scandal_get_scaleaverage
+                0x0000215c                scandal_send_scaleaverage_channel
+                0x0000217a                scandal_integrate_trapz32
+ .text          0x0000219c       0x5c ./build/cr_startup_lpc11.o
+                0x0000219c                NMI_Handler
+                0x000021a0                HardFault_Handler
+                0x000021a4                SVCall_Handler
+                0x000021a8                PendSV_Handler
+                0x000021ac                SysTick_Handler
+                0x000021b0                TIMER16_0_IRQHandler
+                0x000021b0                TIMER32_1_IRQHandler
+                0x000021b0                IntDefaultHandler
+                0x000021b0                PIOINT1_IRQHandler
+                0x000021b0                SSP0_IRQHandler
+                0x000021b0                TIMER16_1_IRQHandler
+                0x000021b0                ADC_IRQHandler
+                0x000021b0                SSP1_IRQHandler
+                0x000021b0                PIOINT2_IRQHandler
+                0x000021b0                BOD_IRQHandler
+                0x000021b0                WAKEUP_IRQHandler
+                0x000021b0                PIOINT0_IRQHandler
+                0x000021b0                WDT_IRQHandler
+                0x000021b0                PIOINT3_IRQHandler
+                0x000021b4                ResetISR
+ .text.memcpy   0x000021f8        0x8 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/armv6-m/libcr_c.a(memcpy.o)
+                0x000021f8                memcpy
+ .text.memset   0x00002200        0x8 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/armv6-m/libcr_c.a(memset.o)
+                0x00002200                memset
  .text.__aeabi_division_idivmod
-                0x00002218        0x6 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
-                0x00002218                __aeabi_idiv
-                0x00002218                __aeabi_idivmod
+                0x00002208        0x6 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
+                0x00002208                __aeabi_idiv
+                0x00002208                __aeabi_idivmod
  .text.__aeabi_division_uidivmod
-                0x0000221e       0x72 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
-                0x0000221e                __aeabi_uidiv
-                0x0000221e                __aeabi_uidivmod
+                0x0000220e       0x72 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
+                0x0000220e                __aeabi_uidiv
+                0x0000220e                __aeabi_uidivmod
  .text.__aeabi_division_uldivmod
-                0x00002290       0x5a /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
-                0x00002290                __aeabi_uldivmod
+                0x00002280       0x5a /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
+                0x00002280                __aeabi_uldivmod
  .text.__aeabi_division_ldivmod
-                0x000022ea       0x32 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
-                0x000022ea                __aeabi_ldivmod
+                0x000022da       0x32 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
+                0x000022da                __aeabi_ldivmod
  .text.__aeabi_division_idiv0
-                0x0000231c        0x2 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
-                0x0000231c                __aeabi_idiv0
+                0x0000230c        0x2 /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(division.o)
+                0x0000230c                __aeabi_idiv0
  .text.__aeabi_llong_lmul
-                0x0000231e       0x2e /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(llong.o)
-                0x0000231e                __aeabi_lmul
+                0x0000230e       0x2e /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(llong.o)
+                0x0000230e                __aeabi_lmul
  .text.__aeabi_memcpy
-                0x0000234c       0x2c /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(memcpy.o)
-                0x0000234c                __aeabi_memcpy
-                0x0000234c                __aeabi_memcpy4
-                0x0000234c                __aeabi_memcpy8
+                0x0000233c       0x2c /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(memcpy.o)
+                0x0000233c                __aeabi_memcpy
+                0x0000233c                __aeabi_memcpy4
+                0x0000233c                __aeabi_memcpy8
  .text.__aeabi_memset_lowlevel
-                0x00002378       0x2a /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(memcpy.o)
-                0x00002378                __aeabi_lowlevel_memset
+                0x00002368       0x2a /opt/LPCExpresso/tools/bin/../lib/gcc/arm-none-eabi/4.4.1/armv6-m/libcr_eabihelpers.a(memcpy.o)
+                0x00002368                __aeabi_lowlevel_memset
  *(.rodata*)
  .rodata.str1.1
-                0x000023a2      0x192 ./build/main.o
- .rodata        0x00002534       0x40 ./build/system_LPC11xx.o
- .rodata        0x00002574       0x10 ./build/gpio.o
+                0x00002392      0x192 ./build/main.o
+ .rodata        0x00002524       0x40 ./build/system_LPC11xx.o
+ .rodata        0x00002564       0x10 ./build/gpio.o
  .rodata.str1.1
-                0x00002584        0x7 ./build/uart.o
- .rodata.str1.1
-                0x0000258b       0x2b ./build/flash.o
- *fill*         0x000025b6        0x2 00
- .rodata        0x000025b8       0x24 ./build/engine.o
+                0x00002574        0x7 ./build/uart.o
+ *fill*         0x0000257b        0x1 00
+ .rodata        0x0000257c       0x24 ./build/engine.o
 
-.glue_7         0x000025dc        0x0
+.glue_7         0x000025a0        0x0
  .glue_7        0x00000000        0x0 linker stubs
 
-.glue_7t        0x000025dc        0x0
+.glue_7t        0x000025a0        0x0
  .glue_7t       0x00000000        0x0 linker stubs
 
-.vfp11_veneer   0x000025dc        0x0
+.vfp11_veneer   0x000025a0        0x0
  .vfp11_veneer  0x00000000        0x0 linker stubs
 
-.v4_bx          0x000025dc        0x0
+.v4_bx          0x000025a0        0x0
  .v4_bx         0x00000000        0x0 linker stubs
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x000025dc                __exidx_start = .
+                0x000025a0                __exidx_start = .
 
 .ARM.exidx
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-                0x000025dc                __exidx_end = .
-                0x000025dc                _etext = .
+                0x000025a0                __exidx_end = .
+                0x000025a0                _etext = .
 
-.data           0x10000100        0x5 load address 0x000025dc
+.data           0x10000100        0x5 load address 0x000025a0
                 0x10000100                _data = .
  *(vtable)
  *(.data*)
@@ -374,7 +372,7 @@ END GROUP
                 0x10000104                UARTTxEmpty
                 0x10000105                _edata = .
 
-.bss            0x10000108      0x4e0 load address 0x000025e4
+.bss            0x10000108      0x4e0 load address 0x000025a8
                 0x10000108                _bss = .
  *(.bss*)
  .bss           0x10000108       0x10 ./build/timer32.o
