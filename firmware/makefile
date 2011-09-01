@@ -1,5 +1,5 @@
 #directory definitions
-ROOT = ../
+ROOT = ..
 SCANDAL = $(ROOT)/scandal
 ARCH = $(SCANDAL)/src/arch/lpc11c14
 UTILS = ../../$(ROOT)/utils
@@ -53,6 +53,9 @@ LFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/main.map -Xlinker --gc-sections -L $
 
 .PHONY: all clean program
 
+RED="\\033[91m"
+NORMAL="\\033[0m"
+
 all: main.axf main.bin
 
 main.axf: $(OBJECTS)
@@ -61,6 +64,10 @@ main.axf: $(OBJECTS)
 
 ###compile object files individually
 main.o: src/main.c
+	@if [ ! -e "cscope.out" ]; then \
+		echo -e "[HINT] $(RED)You should learn to use cscope! Type make cscope$(NORMAL)"; \
+	fi
+
 	@mkdir -p $(BUILD)
 	@echo "[CC] main.c                      this is where your main loop is!"
 	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
@@ -174,6 +181,14 @@ clean:
 	@echo "[CLEAN] $(BUILD)"
 	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
 	@rm -Rf $(BUILD)
+
+cscope:
+	@echo "[GEN] cscope"
+	@if [ -d "$(SCANDAL)" ]; then \
+		find $(SCANDAL) -name "*.[chSs]" >> cscope.files; \
+	fi
+	@find . -name "*.[chSs]">> cscope.files
+	@cscope -b -f cscope.out
 
 main.bin: main.axf
 	@echo "[SIZE] main.axf"
