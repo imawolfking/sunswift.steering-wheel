@@ -9,7 +9,7 @@ syntax: glob
 *.axf
 *.elf
 *.map
-*.swp
+*.sw*
 *.orig
 */Project Outputs*
 cscope.files
