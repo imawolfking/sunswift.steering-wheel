@@ -97,7 +97,8 @@ int main(void)
 
 			value = scandal_get_in_channel_value(TEMPLATE_TEST_IN);
 
-			UART_printf("I received a channel message in the main loop on in_channel 0, value  %d at time %d\n\r", value, scandal_get_in_channel_rcvd_time(TEMPLATE_TEST_IN));
+			UART_printf("I received a channel message in the main loop on in_channel 0, value %d at time %d\n\r", 
+				value, scandal_get_in_channel_rcvd_time(TEMPLATE_TEST_IN));
 
 			if(scandal_get_in_channel_value(TEMPLATE_TEST_IN) == 1) {
 				toggle_red_led();
