@@ -24,11 +24,7 @@ CHECKSUM = checksum
 MCU = cortex-m0
 UC = LPC11C14/301
 
-#LINKSCRIPT = lpc1114_flash_crp.ld
 LINKSCRIPT=lpc1114_flash_can_crp.ld
-#Should LINKSCRIPT=lpc1114_flash_can_crp.ld, It is slightly different in terms of memory management
-#Changed on 23 Aug - Charith, saw something in the user manual to do with some black of memory at the
-#top being required by the CAN controller
 STARTUPSCRIPT = cr_startup_lpc11
 
 OBJECTS  = main.o scandal_obligations.o
@@ -38,7 +34,7 @@ OBJECTS += engine.o error.o manager.o maths.o message.o utils.o
 OBJECTS += $(STARTUPSCRIPT).o
 
 #compiler flags
-OPTIMISATION = s # we need this to fit our code in the flash at the moment :-(
+OPTIMISATION = s#optimise for size. if you want speed, go for 3
 DEBUG = 
 
 CFLAGS  = -mcpu=$(MCU) -DLPC11C14 -D__NEWLIB__ -D__USE_CMSIS -D__CODE_RED -mthumb -O$(OPTIMISATION) $(DEBUG)
@@ -63,7 +59,6 @@ $(BUILD)/main.axf: $(addprefix $(BUILD)/,$(OBJECTS))
 	@echo "[LINK] main.axf"
 	@$(CC) $(CFLAGS) $(LFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $(BUILD)/main.axf 
 
-###compile object files individually
 $(BUILD)/main.o: src/main.c
 	@if [ ! -e "cscope.out" ]; then \
 		echo -e "[HINT] $(RED)You should learn to use cscope! Type make cscope$(NORMAL)"; \
