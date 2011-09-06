@@ -2,7 +2,7 @@
 ROOT = ..
 SCANDAL = $(ROOT)/scandal
 ARCH = $(SCANDAL)/src/arch/lpc11c14
-UTILS = ../../$(ROOT)/utils
+UTILS = $(ROOT)/utilities
 LINKER = $(ARCH)/linker
 CMSIS = $(ARCH)/cmsis
 DRIVERS = $(ARCH)/drivers
@@ -55,96 +55,104 @@ LFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/main.map -Xlinker --gc-sections -L $
 
 RED="\\033[91m"
 NORMAL="\\033[0m"
+YELLOW="\\e[1;33m"
 
-all: main.axf main.bin
+all: $(BUILD)/main.axf $(BUILD)/main.bin
 
-main.axf: $(OBJECTS)
+$(BUILD)/main.axf: $(addprefix $(BUILD)/,$(OBJECTS))
 	@echo "[LINK] main.axf"
 	@$(CC) $(CFLAGS) $(LFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $(BUILD)/main.axf 
 
 ###compile object files individually
-main.o: src/main.c
+$(BUILD)/main.o: src/main.c
 	@if [ ! -e "cscope.out" ]; then \
 		echo -e "[HINT] $(RED)You should learn to use cscope! Type make cscope$(NORMAL)"; \
 	fi
-
 	@mkdir -p $(BUILD)
 	@echo "[CC] main.c                      this is where your main loop is!"
 	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-scandal_obligations.o: src/scandal_obligations.c
+$(BUILD)/scandal_obligations.o: src/scandal_obligations.c
 	@echo "[CC] scandal_obligations.c       this is where some local scandal implementations are"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-leds.o: src/leds.c
+$(BUILD)/leds.o: src/leds.c
 	@echo "[CC] leds.c                      this is your LED routines"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-core_cm0.o: $(CMSIS)/core_cm0.c
+$(BUILD)/core_cm0.o: $(CMSIS)/core_cm0.c
 	@echo "[CC] core_cm0.c"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-engine.o: $(SCANDAL)/src/engine.c
+$(BUILD)/engine.o: $(SCANDAL)/src/engine.c
 	@echo "[CC] scandal/engine.c            this is some core scandal stuff"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-error.o: $(SCANDAL)/src/error.c
+$(BUILD)/error.o: $(SCANDAL)/src/error.c
 	@echo "[CC] scandal/error.c             this is some scandal error handling code"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-manager.o: $(SCANDAL)/src/manager.c
+$(BUILD)/manager.o: $(SCANDAL)/src/manager.c
 	@echo "[CC] scandal/manager.c           this some of scandal helper code"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-message.o: $(SCANDAL)/src/message.c
+$(BUILD)/message.o: $(SCANDAL)/src/message.c
 	@echo "[CC] scandal/message.c           this is where scandal builds CAN messages"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-utils.o: $(SCANDAL)/src/utils.c
+$(BUILD)/utils.o: $(SCANDAL)/src/utils.c
 	@echo "[CC] scandal/utils.c             this may have some useful helper functions"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-maths.o: $(SCANDAL)/src/maths.c
+$(BUILD)/maths.o: $(SCANDAL)/src/maths.c
 	@echo "[CC] scandal/maths.c             this may have some useful math functions"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-system_LPC11xx.o: $(CMSIS)/system_LPC11xx.c
+$(BUILD)/system_LPC11xx.o: $(CMSIS)/system_LPC11xx.c
 	@echo "[CC] cmsis/system_LPC11xx.c"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-gpio.o: $(DRIVERS)/gpio.c
+$(BUILD)/gpio.o: $(DRIVERS)/gpio.c
 	@echo "[CC] cmsis/gpio.c                this is the LPC GPIO driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-timer32.o: $(DRIVERS)/timer32.c
+$(BUILD)/timer32.o: $(DRIVERS)/timer32.c
 	@echo "[CC] cmsis/timer32.c             this is the LPC timer driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-uart.o: $(DRIVERS)/uart.c
+$(BUILD)/uart.o: $(DRIVERS)/uart.c
 	@echo "[CC] cmsis/uart.c                this is the LPC UART driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-can.o: $(DRIVERS)/can.c
+$(BUILD)/can.o: $(DRIVERS)/can.c
 	@echo "[CC] cmsis/can.c                 this is the LPC CAN driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-flash.o: $(DRIVERS)/flash.c
+$(BUILD)/flash.o: $(DRIVERS)/flash.c
 	@echo "[CC] cmsis/flash.c               this is the LPC flash driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-i2c.o: $(DRIVERS)/i2c.c
+$(BUILD)/i2c.o: $(DRIVERS)/i2c.c
 	@echo "[CC] cmsis/i2c.c                 this is the LPC I2C driver"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-$(STARTUPSCRIPT).o: $(STARTUP)/$(STARTUPSCRIPT).c
+$(BUILD)/$(STARTUPSCRIPT).o: $(STARTUP)/$(STARTUPSCRIPT).c
 	@echo "[CC] startup.c"
-	@$(CC) $(CFLAGS) -c -o $(BUILD)/$@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/main.bin: $(BUILD)/main.axf
+	@echo "[SIZE] main.axf"
+	@$(SIZE) $<
+	@echo "[GEN] main.bin"
+	@$(OBJCOPY) -O binary $< $@
+	@echo "[CHECKSUM] main.bin"
+	@echo -ne "   "
+	@$(CHECKSUM) -p $(UC) -d $@
+	@echo
 
-program: main.axf
+program: $(BUILD)/main.axf
 	@echo "[PROGRAM] main.axf               this is what gets flashed to the target"
-
 	@echo "[PROGRAM]  checking for programmer...";
 	@-lsusb | grep -q "df55"; \
 	if [ $$? -eq 0 ]; then \
@@ -152,26 +160,31 @@ program: main.axf
 		if [ -x "$(START_PROGRAMMER)" ]; then \
 			sudo $(START_PROGRAMMER) -d 0x471:0xdf55 -c 0 -t 2048 -R -D $(UTILS)/LPCXpressoWIN.enc > /dev/null 2>&1; \
 			if [ $$? -ne 0 ]; then \
-				echo -e "\033[91m[PROGRAM]    dfu-util failed to change programmer mode!\033[0m"; \
+				echo -e "$(RED)[PROGRAM]    dfu-util failed to change programmer mode!$(RED)"; \
 			else \
-				echo -e "\033[91m[PROGRAM]    Successfully changed LPCXpresso into correct mode.\033[0m"; \
-				echo -e "\e[1;33m[PROGRAM]    If in VMware Fusion, you may need to reattach the CodeRed device...\033[0m"; \
+				echo -e "$(RED)[PROGRAM]    Successfully changed LPCXpresso into correct mode.$(RED)"; \
+				echo -e "$(YELLOW)[PROGRAM]    If in VMware Fusion, you may need to reattach the CodeRed device...$(NORMAL)"; \
 			fi; \
 		else \
-			echo -e "\033[91m[PROGRAM]    dfu-util doesn't exist in path!\033[0m"; \
+			echo -e "$(RED)[PROGRAM]    dfu-util doesn't exist in path!$(NORMAL)"; \
 		fi; \
 		sleep 1; \
 	else \
 		lsusb | grep -q "1fc9:0009"; \
 		if [ $$? -ne 0 ]; then \
-			echo -e "\033[91m[PROGRAM]    No programmer detected!\033[0m"; \
+			echo -e "$(RED)[PROGRAM]    No programmer detected!$(NORMAL)"; \
 		fi; \
 	fi
-
 	@lsusb | grep -q "1fc9:0009"; \
 	if [ $$? -eq 0 ]; then \
-		echo -e "\033[91m[PROGRAM]   detected LPC Expresso in correct mode, attempting program\033[0m"; \
-		$(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load-exec=$(BUILD)/main.axf > /dev/null 2>&1; \
+		echo -e "$(RED)[PROGRAM]   detected LPC Expresso in correct mode, attempting program$(NORMAL)"; \
+		$(FLASH_CHIP) -wire=winusb -p$(UC) -flash-load-exec=$(BUILD)/main.axf > /tmp/flash.out 2>&1; \
+		if [ $$? -ne 0 ]; then \
+			echo -e "$(RED)[PROGRAM]   FAILED!$(NORMAL)"; \
+			cat /tmp/flash.out; \
+		else \
+			rm /tmp/flash.out; \
+		fi; \
 	fi
 
 #program using .bin, doesn't seem to work atm
@@ -182,6 +195,9 @@ clean:
 	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
 	@rm -Rf $(BUILD)
 
+realclean: clean
+	@rm -f cscope.out cscope.files
+
 cscope:
 	@echo "[GEN] cscope"
 	@if [ -d "$(SCANDAL)" ]; then \
@@ -189,13 +205,3 @@ cscope:
 	fi
 	@find . -name "*.[chSs]">> cscope.files
 	@cscope -b -f cscope.out
-
-main.bin: main.axf
-	@echo "[SIZE] main.axf"
-	@$(SIZE) $(BUILD)/main.axf; 
-	@echo "[GEN] main.bin"
-	@$(OBJCOPY) -O binary $(BUILD)/main.axf $(BUILD)/main.bin;
-	@echo "[CHECKSUM] main.bin"
-	@echo -ne "   "
-	@$(CHECKSUM) -p $(UC) -d $(BUILD)/main.bin;
-	@echo
