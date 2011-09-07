@@ -27,14 +27,12 @@
 
 #include <scandal/types.h>
 
+#ifdef lpc11c14
 #include <project/driver_config.h>
 #include <project/target_config.h>
+#endif
 
 #include <arch/gpio.h>
-
-/* this is using two different levels of abstraction to twiddle the LEDs. We can
- * probably go even further up down thr rabbit hole to just modifying registers
- */
 
 void red_led(u08 on) {
 	if (on)
@@ -44,7 +42,7 @@ void red_led(u08 on) {
 }
 
 void toggle_red_led(void) {
-	LPC_GPIO[RED_LED_PORT]->MASKED_ACCESS[(1<<RED_LED_BIT)] ^= (1<<RED_LED_BIT);
+	GPIOToggleValue(2,8);
 }
 
 void yellow_led(u08 on) {
@@ -55,6 +53,6 @@ void yellow_led(u08 on) {
 }
 
 void toggle_yellow_led(void) {
-	LPC_GPIO[YELLOW_LED_PORT]->MASKED_ACCESS[(1<<YELLOW_LED_BIT)] ^= (1<<YELLOW_LED_BIT);
+	GPIOToggleValue(2,7);
 }
 

@@ -26,8 +26,7 @@
 
 
 #include <stdint.h>
-#include "LPC11xx.h"
-
+#include <cmsis/LPC11xx.h>
 
 /*----------------------------------------------------------------------------
   Check the register settings

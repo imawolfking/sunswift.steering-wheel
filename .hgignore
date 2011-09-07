@@ -8,6 +8,8 @@ syntax: glob
 *.bin
 *.axf
 *.elf
+*.hex
+*.lst
 *.map
 *.sw*
 *.orig
