@@ -55,7 +55,7 @@ $(BUILD)/$(MAIN_NAME).o: src/$(MAIN_NAME).c
 	fi
 	@mkdir -p $(BUILD)
 	@echo "[CC] $@"
-	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
+	@if [ "$(BUILD)" == "." ]; then echo -e "$(RED)Don't use . as BUILD$(NORMAL)"; exit 1; fi
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
 # Project local objects
@@ -63,7 +63,7 @@ $(BUILD)/%.o: src/%.c
 	@echo "[CC] $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
-# Architecture drivers
+# Architecture specific drivers
 $(BUILD)/%.o: $(DRIVERS)/%.c
 	@echo "[CC] $@"
 	@$(CC) $(CFLAGS) -c -o $@ $<
@@ -76,7 +76,7 @@ $(BUILD)/%.o: $(SCANDAL)/src/%.c
 # Remove the build directory
 clean:
 	@echo "[CLEAN] $(BUILD)"
-	@if [ "$(BUILD)" == "." ]; then echo -e "\033[91mDon't use . as BUILD\033[0m"; exit 1; fi
+	@if [ "$(BUILD)" == "." ]; then echo -e "$(RED)Don't use . as BUILD$(NORMAL)"; exit 1; fi
 	@rm -Rf $(BUILD)
 
 # Remove build directory and cscope
