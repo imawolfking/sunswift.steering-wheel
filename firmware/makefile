@@ -43,6 +43,7 @@ CFLAGS += -I$(ARCH)/include # for arch drivers
 CFLAGS += -I$(ARCH) # for cmsis
 CFLAGS += -I./include # for project includes
 CFLAGS += -lm #Added lm for math.h
+CFLAGS += -Wall
 
 LSCRIPT = $(LINKER)/$(LINKSCRIPT)
 LFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/main.map -Xlinker --gc-sections -L $(LINKER) -T "$(LSCRIPT)"
@@ -155,9 +156,9 @@ program: $(BUILD)/main.axf
 		if [ -x "$(START_PROGRAMMER)" ]; then \
 			sudo $(START_PROGRAMMER) -d 0x471:0xdf55 -c 0 -t 2048 -R -D $(UTILS)/LPCXpressoWIN.enc > /dev/null 2>&1; \
 			if [ $$? -ne 0 ]; then \
-				echo -e "$(RED)[PROGRAM]    dfu-util failed to change programmer mode!$(RED)"; \
+				echo -e "$(RED)[PROGRAM]    dfu-util failed to change programmer mode!$(NORMAL)"; \
 			else \
-				echo -e "$(RED)[PROGRAM]    Successfully changed LPCXpresso into correct mode.$(RED)"; \
+				echo -e "$(RED)[PROGRAM]    Successfully changed LPCXpresso into correct mode.$(NORMAL)"; \
 				echo -e "$(YELLOW)[PROGRAM]    If in VMware Fusion, you may need to reattach the CodeRed device...$(NORMAL)"; \
 			fi; \
 		else \
