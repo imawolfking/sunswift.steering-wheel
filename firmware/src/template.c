@@ -1,12 +1,36 @@
 /* --------------------------------------------------------------------------                                 
     Template project main
-    File name: main.c
+    File name: template.c
     Author: Etienne Le Sueur
-    Description: The template main file
+    Description: The template main file. It provides a simple example of using
+                 some standard scandal functions such as the UART library, the
+                 CAN library, timers, LEDs, GPIOs.
+                 It is designed to compile and work for the 3 micros we use on
+                 the car currently, the MSP430F149 and MCP2515 combination and
+                 the LPC11C14 and LPC1768 which have built in CAN controllers.
+
+                 UART_printf is provided by the Scandal stdio library and 
+                 should work well on all 3 micros.
+
+                 If you are using this as the base for a new project, you
+                 should first change the name of this file to the name of
+                 your project, and then in the top level makefile, you should
+                 change the CHIP and MAIN_NAME variables to correspond to
+                 your hardware.
+
+                 Don't be scared of Scandal. Dig into the code and try to
+                 understand what's going on. If you think of an improvement
+                 to any of the functions, then go ahead and implement it.
+                 However, before committing the changes to the Scandal repo,
+                 you should discuss with someone else to ensure that what 
+                 you've done is a good thing ;-)
+
+                 Keep in mind that this code is live to the public on
+                 Google Code. No profanity in comments please!
 
     Copyright (C) Etienne Le Sueur, 2011
 
-    Date: 07/09/2011
+    Created: 07/09/2011
    -------------------------------------------------------------------------- */
 
 /* 
@@ -48,16 +72,16 @@
 #include <signal.h>
 #include <project/hardware.h>
 
-/* Set up the clocks on the MSP430f149
- * Use XTAL2, which is externally attached */
+/* Set up the clocks on the MSP430f149. Use XTAL2, which is externally attached */
 void init_clock(void) {
 	volatile unsigned int i;
-	
+
 	/* XTAL = LF crystal, ACLK = LFXT1/1, DCO Rset = 4, XT2 = ON */
 	BCSCTL1 = 0x04;
-	
+
 	/* Clear OSCOFF flag - start oscillator */
 	_BIC_SR( OSCOFF );
+
 	do {
 		/* Clear OSCFault flag */
 		IFG1 &= ~OFIFG; 
@@ -65,7 +89,7 @@ void init_clock(void) {
 		for( i = 255; i > 0; i-- )
 			;
 	} while(( IFG1 & OFIFG ) != 0);
-	
+
 	/* Set MCLK to XT2CLK and SMCLK to XT2CLK */
 	BCSCTL2 = 0x88; 
 } // init_clock
@@ -129,10 +153,14 @@ void setup(void) {
 #endif // lpc1768 || lpc11c14
 } // setup
 
+/* This is an in-channel handler. It gets called when a message comes in on the
+ * registered node/channel combination as set up using the USB-CAN. */
 void in_channel_0_handler(int32_t value, uint32_t src_time) {
 	UART_printf("in_channel_0_handler got called with value %d time at source %u\n\r", (int)value, (unsigned int)src_time);
 }
 
+/* This is your main function! You should have an infinite loop in here that
+ * does all the important stuff your node was designed for */
 int main(void) {
 	int i = 0;
 	uint32_t value = 0xaa;
@@ -146,7 +174,7 @@ int main(void) {
 	sc_time_t one_sec_timer = sc_get_timer(); /* Initialise the timer variable */
 	sc_time_t test_in_timer = sc_get_timer(); /* Initialise the timer variable */
 
-	/* Set LEDs to known states, i.e. on */
+	/* Set LEDs to known states */
 	red_led(1);
 	yellow_led(0);
 
@@ -166,7 +194,7 @@ int main(void) {
 		 * the number of errors and the version of scandal */
 		handle_scandal();
 
-		/* Send a UART message and flash an LED every second */
+		/* Send a UART and CAN message and flash an LED every second */
 		if(sc_get_timer() >= one_sec_timer + 1000) {
 			/* Send the message */
 			UART_printf("This is the 1 second timer... %u\n\r", i++);
@@ -185,6 +213,9 @@ int main(void) {
 			one_sec_timer = sc_get_timer();
 		}
 
+		/* The old way of checking for an incoming message that you've registered for.
+		 * This is a silly way to do this. A better way is to use the scandal_register_in_channel_handler
+		 * feature. Your function will get called when a new message comes in */
 		if(scandal_get_in_channel_rcvd_time(TEMPLATE_TEST_IN) > test_in_timer) {
 
 			value = scandal_get_in_channel_value(TEMPLATE_TEST_IN);
@@ -200,6 +231,5 @@ int main(void) {
 
 			test_in_timer = scandal_get_in_channel_rcvd_time(TEMPLATE_TEST_IN);
 		}
-
 	}
 }

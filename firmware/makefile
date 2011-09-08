@@ -38,14 +38,13 @@ CFLAGS += -D$(CHIP)
 
 .PHONY: clean realclean cscope
 
+# For printing out colours in makefile scripts
 RED="\\033[91m"
 NORMAL="\\033[0m"
 YELLOW="\\e[1;33m"
 
+# Include the chip specific makefile
 include makefile.$(CHIP)
-
-# This is stuff that we definitely need. Add architecture specific stuff to the other makefile.
-# Every architecture should provide at least a flash and CAN driver
 
 # This target is special because it's the first in the list. We should make the build directory
 # here and do anything else that only needs to happen once
