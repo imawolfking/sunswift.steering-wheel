@@ -52,7 +52,7 @@
 
 #include <scandal/engine.h>
 #include <scandal/message.h>
-#include <scandal/led.h>
+#include <scandal/leds.h>
 #include <scandal/utils.h>
 #include <scandal/uart.h>
 #include <scandal/stdio.h>
@@ -146,7 +146,7 @@ void setup(void) {
 
 	P5OUT = CAN_CS;
 	P5SEL = SIMO1 | SOMI1 | UCLK1;
-	P5DIR = CAN_CS | SIMO1 | UCLK1 | YELLOWLED | REDLED;
+	P5DIR = CAN_CS | SIMO1 | UCLK1 | YELLOW_LED_BIT | RED_LED_BIT;
 
 	P6SEL = MEAS_12V_PIN;
 #endif // msp430f149
