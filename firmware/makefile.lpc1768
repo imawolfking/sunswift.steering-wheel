@@ -34,11 +34,11 @@ all: $(BUILD)/$(MAIN_NAME).hex $(BUILD)/$(MAIN_NAME).bin
 
 $(BUILD)/$(MAIN_NAME).hex: $(BUILD)/$(MAIN_NAME).elf
 	@echo "[OBJCOPY] $@"
-	$(OBJCOPY) -R .stack -O ihex $< $@
+	@$(OBJCOPY) -R .stack -O ihex $< $@
 
 $(BUILD)/$(MAIN_NAME).elf: $(addprefix $(BUILD)/,$(OBJECTS))
 	@echo "[CC] $@"
-	$(CC) $(LDFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $@
+	@$(CC) $(LDFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $@
 
 $(BUILD)/core_cm3.o: $(CMSIS)/core_cm3.c
 	@echo "[CC] $@"
