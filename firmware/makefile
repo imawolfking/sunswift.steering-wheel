@@ -3,7 +3,7 @@
 # add any custom C source files to OBJECTS
 
 # Set CHIP to be lpc11c14, lpc1768 or msp430f149 depending on what micro you're using
-CHIP = lpc11c14
+CHIP = lpc1768
 
 # This should be what your main C file is called
 MAIN_NAME = template
