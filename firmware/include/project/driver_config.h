@@ -8,7 +8,13 @@
 #ifndef DRIVER_CONFIG_H_
 #define DRIVER_CONFIG_H
 
+#if defined(lpc11c14)
 #include <cmsis/LPC11xx.h>
+#endif
+
+#if defined(lpc1768)
+#include <cmsis/LPC17xx.h>
+#endif
 
 #undef CAN_UART_DEBUG
 

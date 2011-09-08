@@ -22,20 +22,20 @@ LINKSCRIPT=lpc1114_flash_can_crp.ld
 STARTUPSCRIPT = cr_startup_lpc11
 
 OBJECTS += core_cm0.o system_LPC11xx.o
-OBJECTS += timer32.o i2c.o ssp.o
+OBJECTS += i2c.o ssp.o
 OBJECTS += $(STARTUPSCRIPT).o
 
 CFLAGS += -mcpu=$(MCU) -DLPC11C14 -D__NEWLIB__ -D__USE_CMSIS -D__CODE_RED -mthumb
 CFLAGS += -lm
 
 LSCRIPT = $(LINKER)/$(LINKSCRIPT)
-LFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/main.map -Xlinker --gc-sections -L $(LINKER) -T "$(LSCRIPT)"
+LDFLAGS  = -nostdlib  -Xlinker -Map=$(BUILD)/main.map -Xlinker --gc-sections -L $(LINKER) -T "$(LSCRIPT)"
 
 all: $(BUILD)/main.axf $(BUILD)/main.bin
 
 $(BUILD)/main.axf: $(addprefix $(BUILD)/,$(OBJECTS))
 	@echo "[LINK] main.axf"
-	@$(CC) $(CFLAGS) $(LFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $(BUILD)/main.axf 
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(addprefix $(BUILD)/,$(OBJECTS)) -o $(BUILD)/main.axf 
 
 $(BUILD)/core_cm0.o: $(CMSIS)/core_cm0.c
 	@echo "[CC] $@"

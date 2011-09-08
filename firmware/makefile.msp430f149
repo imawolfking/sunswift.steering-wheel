@@ -14,7 +14,7 @@ CFLAGS += -g -O1 -Wall -mmcu=$(MCU) -I$(SCANDAL)/include -I$(ARCH)/include -I./i
 LDFLAGS = -mmcu=$(MCU) 
 ASFLAGS = -mmcu=$(MCU) 
 
-OBJECTS += spi.o timer.o
+OBJECTS += spi.o
 
 all: $(BUILD)/$(MAIN_NAME).hex $(BUILD)/$(MAIN_NAME).lst
 

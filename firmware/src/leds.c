@@ -27,7 +27,7 @@
 
 #include <scandal/types.h>
 
-#ifdef lpc11c14
+#if defined(lpc11c14) || defined(lpc1768)
 #include <project/driver_config.h>
 #include <project/target_config.h>
 #endif
@@ -36,23 +36,23 @@
 
 void red_led(u08 on) {
 	if (on)
-		GPIOSetValue(2,8,0);
+		GPIO_SetValue(2,8,0);
 	else
-		GPIOSetValue(2,8,1);
+		GPIO_SetValue(2,8,1);
 }
 
 void toggle_red_led(void) {
-	GPIOToggleValue(2,8);
+	GPIO_ToggleValue(2,8);
 }
 
 void yellow_led(u08 on) {
 	if (on)
-		GPIOSetValue(2,7,0);
+		GPIO_SetValue(2,7,0);
 	else
-		GPIOSetValue(2,7,1);
+		GPIO_SetValue(2,7,1);
 }
 
 void toggle_yellow_led(void) {
-	GPIOToggleValue(2,7);
+	GPIO_ToggleValue(2,7);
 }
 

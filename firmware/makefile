@@ -3,7 +3,7 @@
 # add any custom C source files to OBJECTS
 
 # Set CHIP to be lpc11c14, lpc1768 or msp430f149 depending on what micro you're using
-CHIP = msp430f149
+CHIP = lpc11c14
 
 # This should be what your main C file is called
 MAIN_NAME = template
@@ -22,7 +22,7 @@ OBJECTS  = $(MAIN_NAME).o scandal_obligations.o leds.o
 # Scandal objects
 OBJECTS += engine.o error.o manager.o maths.o message.o utils.o stdio.o
 # Driver objects
-OBJECTS += can.o flash.o uart.o gpio.o
+OBJECTS += can.o flash.o uart.o gpio.o timer.o
 # Add other objects here or in the architecture specific makefile
 OBJECTS +=
 

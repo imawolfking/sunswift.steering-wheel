@@ -26,32 +26,30 @@
  * along with the project.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arch/can.h>
-#include <arch/uart.h>
-
 #include <scandal/engine.h>
 #include <scandal/message.h>
 #include <scandal/led.h>
 #include <scandal/utils.h>
+#include <scandal/uart.h>
 #include <scandal/stdio.h>
 
-#ifdef lpc11c14
+#if defined(lpc11c14) || defined(lpc1768)
 #include <project/driver_config.h>
 #include <project/target_config.h>
-
-#include <arch/timer32.h>
+#include <arch/can.h>
+#include <arch/uart.h>
+#include <arch/timer.h>
 #include <arch/gpio.h>
-#include <arch/type.h>
+#include <arch/types.h>
 #include <arch/i2c.h>
-#else
-#ifdef lpc1768
-
 #else
 #ifdef msp430f149
 #include <msp430x14x.h>
 #include <signal.h>
 #include <project/hardware.h>
 
+/* Set up the clocks on the MSP430f149
+ * Use XTAL2, which is externally attached */
 void init_clock(void) {
 	volatile unsigned int i;
 	
@@ -70,8 +68,11 @@ void init_clock(void) {
 	
 	/* Set MCLK to XT2CLK and SMCLK to XT2CLK */
 	BCSCTL2 = 0x88; 
-}
+} // init_clock
 
+/* The interrupt line on the MCP2515 CAN controller can be connected to
+ * any interrupt enabled GPIO, hence we allow the developer to handle these
+ * functions */
 void enable_can_interrupt(){
 	P2IE = CAN_INT;
 }
@@ -86,19 +87,19 @@ interrupt (PORT2_VECTOR) port2int(void) {
 }
 
 #endif // msp430f149
-#endif // lpc1768
-#endif // lpc11c14
+#endif // lpc11c14 || lpc1768
 
-void setup_ports(void) {
-#ifdef lpc11c14
-	GPIOInit();
-	GPIOSetDir(2,8,1); //Green LED, Out
-	GPIOSetDir(2,7,1); //Yel LED, Out
-#else
-#ifdef lpc1768
-
+/* Do some general setup for clocks, LEDs and interrupts
+ * and UART stuff on the MSP430 */
+void setup(void) {
+#if defined(lpc11c14) || defined(lpc1768)
+	GPIO_Init();
+	GPIO_SetDir(2,8,1); //Green LED, Out
+	GPIO_SetDir(2,7,1); //Yel LED, Out
 #else
 #ifdef msp43f149
+	init_clock();
+
 	P1OUT = 0x00;
 	P1SEL = 0x00;
 	P1DIR = 0x00;
@@ -110,24 +111,23 @@ void setup_ports(void) {
 	P2DIR = 0x00;
 	P2IES = CAN_INT;
 	P2IE  = 0x00;
-	
+
 	P3OUT = 0x00;
 	P3SEL = TX | RX;
 	P3DIR = TX;
-	
+
 	P4OUT = 0x00;
 	P4SEL = 0x00;
 	P4DIR = 0x00;
-	
+
 	P5OUT = CAN_CS;
 	P5SEL = SIMO1 | SOMI1 | UCLK1;
 	P5DIR = CAN_CS | SIMO1 | UCLK1 | YELLOWLED | REDLED;
-	
-	P6SEL = MEAS_12V_PIN;  
+
+	P6SEL = MEAS_12V_PIN;
 #endif // msp430f149
-#endif // lpc1768
-#endif // lpc11c14
-}
+#endif // lpc1768 || lpc11c14
+} // setup
 
 void in_channel_0_handler(int32_t value, uint32_t src_time) {
 	UART_printf("in_channel_0_handler got called with value %d time at source %u\n\r", (int)value, (unsigned int)src_time);
@@ -137,11 +137,7 @@ int main(void) {
 	int i = 0;
 	uint32_t value = 0xaa;
 
-	setup_ports();
-
-#ifdef msp430f149
-	init_clock();
-#endif
+	setup();
 
 	scandal_init();
 
