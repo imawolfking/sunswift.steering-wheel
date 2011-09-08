@@ -3,7 +3,7 @@
 # add any custom C source files to OBJECTS
 
 # Set CHIP to be lpc11c14, lpc1768 or msp430f149 depending on what micro you're using
-CHIP = msp430f149
+CHIP = lpc11c14
 
 # This should be what your main C file is called
 MAIN_NAME = template
@@ -41,7 +41,7 @@ CFLAGS += -D$(CHIP)
 # For printing out colours in makefile scripts
 RED="\\033[91m"
 NORMAL="\\033[0m"
-YELLOW="\\e[1;33m"
+YELLOW="\\e[1\;33m"
 
 # Include the chip specific makefile
 include makefile.$(CHIP)
