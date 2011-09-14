@@ -1,4 +1,0 @@
-Record=SheetSymbol|SourceDocument=project_name_lpc11c14.SchDoc|Designator=3V3_50mA|SchDesignator=3V3_50mA|FileName=power_supply.SchDoc|SymbolType=Normal|RawFileName=power_supply.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
-Record=SheetSymbol|SourceDocument=project_name_lpc11c14.SchDoc|Designator=CAN|SchDesignator=CAN|FileName=can_unisolated.SchDoc|SymbolType=Normal|RawFileName=can_unisolated.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
-Record=SheetSymbol|SourceDocument=project_name_lpc11c14.SchDoc|Designator=LPC|SchDesignator=LPC|FileName=lpc11c14.SchDoc|SymbolType=Normal|RawFileName=lpc11c14.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
-Record=TopLevelDocument|FileName=project_name_lpc11c14.SchDoc

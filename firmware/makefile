@@ -6,7 +6,7 @@
 CHIP = lpc11c14
 
 # This should be what your main C file is called
-MAIN_NAME = template
+MAIN_NAME = steering-wheel
 
 # Directory definitions
 ROOT = ..
