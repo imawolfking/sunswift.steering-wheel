@@ -2,6 +2,8 @@ syntax: glob
 
 *Preview
 *htm
+*drc
+*html
 *History
 .DS_Store
 *.o
