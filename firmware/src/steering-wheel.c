@@ -40,6 +40,7 @@
 #include <arch/timer.h>
 #include <arch/gpio.h>
 #include <arch/types.h>
+#include <arch/adc.h>
 
 #define VELOCITY_MAX 40 /* max velocity in m/s */
 
@@ -114,14 +115,28 @@ void setup(void) {
 		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_SINGLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
 		 &hazards_handler);
 
+	/* Left Regen paddle */
+	GPIO_SetFunction(LEFT_PADDLE_PORT, LEFT_PADDLE_BIT, GPIO_FUNC1);
+
+	/* Right Regen paddle */
+	GPIO_SetFunction(RIGHT_PADDLE_PORT, RIGHT_PADDLE_BIT, GPIO_FUNC1);
+
 } // setup
 
 /* This is your main function! You should have an infinite loop in here that
  * does all the important stuff your node was designed for */
 int main(void) {
+
+	uint32_t regen_paddle_value = 0;
+	uint32_t accelerator_paddle_value = 0;
+
 	setup();
 
 	scandal_init();
+
+	ADC_Init(2);
+	ADC_EnableChannel(REGEN_ADC_CHANNEL);
+	ADC_EnableChannel(ACCELERATOR_ADC_CHANNEL);
 
 	sc_time_t one_sec_timer = sc_get_timer(); /* Initialise the timer variable */
 
@@ -188,8 +203,13 @@ int main(void) {
 						send ws drive commands (motor_current, velocity) at least every 200ms
 		*/
 
+		ADC_Read(REGEN_ADC_CHANNEL);
+		ADC_Read(ACCELERATOR_ADC_CHANNEL);
+
 		if(sc_get_timer() >= one_sec_timer + 1000) {
 
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, ADCValue[ACCELERATOR_ADC_CHANNEL]);
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, ADCValue[REGEN_ADC_CHANNEL]);
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
 
 			if (hazards) {

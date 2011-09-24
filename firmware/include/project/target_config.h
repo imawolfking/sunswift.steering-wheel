@@ -75,6 +75,15 @@
 #define REV_SWITCH_PORT PORT1
 #define REV_SWITCH_BIT 9
 
-#define LED_TOGGLE_TICKS 100 // 100 ticks = 1 Hz flash rate
-#define FAST_LED_TOGGLE_TICKS 25 // 100 ticks = 1 Hz flash rate
-#define COUNT_MAX		3 // how high to count on the LED display
+/* Other ports */
+
+#define LEFT_PADDLE_PORT  1
+#define LEFT_PADDLE_BIT   2
+
+#define RIGHT_PADDLE_PORT 1
+#define RIGHT_PADDLE_BIT  0
+
+/* Other defines */
+
+#define REGEN_ADC_CHANNEL       3
+#define ACCELERATOR_ADC_CHANNEL 1
