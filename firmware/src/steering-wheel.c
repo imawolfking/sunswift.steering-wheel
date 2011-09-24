@@ -34,8 +34,6 @@
 #include <scandal/leds.h>
 #include <scandal/utils.h>
 
-#include <string.h>
-
 #include <project/driver_config.h>
 #include <project/target_config.h>
 #include <arch/can.h>
@@ -43,11 +41,79 @@
 #include <arch/gpio.h>
 #include <arch/types.h>
 
-/* Do some general setur */
+#define VELOCITY_MAX 40 /* max velocity in m/s */
+
+uint32_t cruise = 0;
+uint32_t hazards = 1;
+uint32_t horn = 0;
+float velocity = VELOCITY_MAX;
+
+void speed_hold_handler();
+void speed_down_handler();
+void speed_up_handler();
+void horn_handler();
+void hazards_handler();
+
+/* Do some general setup */
 void setup(void) {
 	GPIO_Init();
-	GPIO_SetDir(2,8,1); //Green LED, Out
-	GPIO_SetDir(2,7,1); //Yel LED, Out
+
+	/* LEDs */
+	GPIO_SetFunction(PRCH_LED_PORT, PRCH_LED_BIT, GPIO_PIO);
+	GPIO_SetFunction(CRUISE_LED_PORT, CRUISE_LED_BIT, GPIO_PIO);
+	GPIO_SetFunction(REV_LED_PORT, REV_LED_BIT, GPIO_PIO);
+	GPIO_SetFunction(RIGHT_LED_PORT, RIGHT_LED_BIT, GPIO_PIO);
+	GPIO_SetFunction(LEFT_LED_PORT, LEFT_LED_BIT, GPIO_PIO);
+
+	GPIO_SetDir(PRCH_LED_PORT, PRCH_LED_BIT, 1);
+	GPIO_SetDir(CRUISE_LED_PORT, CRUISE_LED_BIT, 1);
+	GPIO_SetDir(REV_LED_PORT, REV_LED_BIT, 1);
+	GPIO_SetDir(RIGHT_LED_PORT, RIGHT_LED_BIT, 1);
+	GPIO_SetDir(LEFT_LED_PORT, LEFT_LED_BIT, 1);
+
+	/* Switches */
+
+	/* Cruise switch */
+	GPIO_SetFunction(SPEED_HOLD_SWITCH_PORT, SPEED_HOLD_SWITCH_BIT, GPIO_PIO);
+	GPIO_SetDir(SPEED_HOLD_SWITCH_PORT, SPEED_HOLD_SWITCH_BIT, 0);
+
+	GPIO_RegisterInterruptHandler(SPEED_HOLD_SWITCH_PORT, SPEED_HOLD_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_SINGLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &speed_hold_handler);
+
+	/* Set speed up switch */
+	GPIO_SetFunction(SPEED_UP_SWITCH_PORT, SPEED_UP_SWITCH_BIT, GPIO_PIO);
+	GPIO_SetDir(SPEED_UP_SWITCH_PORT, SPEED_UP_SWITCH_BIT, 0);
+
+	GPIO_RegisterInterruptHandler(SPEED_UP_SWITCH_PORT, SPEED_UP_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_SINGLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &speed_up_handler);
+
+	/* Set speed down switch */
+	GPIO_SetFunction(SPEED_DOWN_SWITCH_PORT, SPEED_DOWN_SWITCH_BIT, GPIO_PIO);
+	GPIO_SetDir(SPEED_DOWN_SWITCH_PORT, SPEED_DOWN_SWITCH_BIT, 0);
+
+	GPIO_RegisterInterruptHandler(SPEED_DOWN_SWITCH_PORT, SPEED_DOWN_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_SINGLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &speed_down_handler);
+
+	/* Horn switch */
+	GPIO_SetFunction(HORN_SWITCH_PORT, HORN_SWITCH_PORT, GPIO_PIO);
+	GPIO_SetDir(HORN_SWITCH_PORT, HORN_SWITCH_PORT, 0);
+
+	/* we use a double edge here so that we can hold the horn button down */
+	GPIO_RegisterInterruptHandler(HORN_SWITCH_PORT, HORN_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_DOUBLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &horn_handler);
+
+	/* Hazards switch */
+	GPIO_SetFunction(HAZARDS_SWITCH_PORT, HAZARDS_SWITCH_BIT, GPIO_PIO);
+	GPIO_SetDir(HAZARDS_SWITCH_PORT, HAZARDS_SWITCH_BIT, 0);
+
+	GPIO_RegisterInterruptHandler(HAZARDS_SWITCH_PORT, HAZARDS_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_SINGLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &hazards_handler);
+
 } // setup
 
 /* This is your main function! You should have an infinite loop in here that
@@ -60,8 +126,8 @@ int main(void) {
 	sc_time_t one_sec_timer = sc_get_timer(); /* Initialise the timer variable */
 
 	/* Set LEDs to known states */
-	red_led(0);
-	yellow_led(1);
+	left_led(1);
+	right_led(1);
 
 	scandal_delay(100); /* wait for the UART clocks to settle */
 
@@ -123,15 +189,13 @@ int main(void) {
 		*/
 
 		if(sc_get_timer() >= one_sec_timer + 1000) {
-			/* Send a channel message with a blerg value at low priority on channel 0 */
-			scandal_send_channel(TELEM_LOW, /* priority */
-									0,      /* channel num */
-									0xaa   /* value */
-			);
 
-			/* Twiddle the LEDs */
-			toggle_yellow_led();
-			toggle_red_led();
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
+
+			if (hazards) {
+				toggle_left_led();
+				toggle_right_led();
+			}
 
 			/* Update the timer */
 			one_sec_timer = sc_get_timer();

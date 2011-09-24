@@ -29,35 +29,3 @@
 /* Hardware definitions */
 #define BIT(x) (1<<x)
 
-#define CLOCK_SPEED 7372800
-
-/* Port 1 */
-
-/* Port 2 */
-#define CAN_INT         BIT(7)
-
-/* Port 3 */
-#define TX              BIT(4) 
-#define RX              BIT(5)
-
-/* Port 4 */
-
-/* Port 5 */
-#define RED_LED_PORT    5
-#define YELLOW_LED_PORT 5
-#define CAN_CS          BIT(0) /* Note: re-defined in scandal_devices.h */
-#define SIMO1           BIT(1)
-#define SOMI1           BIT(2)
-#define UCLK1           BIT(3)
-#define YELLOW_LED_BIT  BIT(6)
-#define RED_LED_BIT     BIT(7)
-
-/* Port 6 / ADC */
-#define MEAS_12V_PIN    (BIT(7))
-
-/* ADC channel definitions */
-#define MEAS_12V        7
-
-#define MEAS_TEMP       8
-#define MEAS_3V3        9
-
