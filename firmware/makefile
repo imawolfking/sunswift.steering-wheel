@@ -24,7 +24,7 @@ OBJECTS += engine.o error.o manager.o maths.o message.o utils.o stdio.o leds.o w
 # Driver objects
 OBJECTS += can.o flash.o uart.o gpio.o timer.o wdt.o system.o
 # Add other objects here or in the architecture specific makefile
-OBJECTS += switch_handlers.o
+OBJECTS += switch_handlers.o wavesculptor_handlers.o in_channel_handlers.o leds_annexure.o
 
 CFLAGS  = -I$(SCANDAL)/include # for scandal includes
 CFLAGS += -I$(ARCH)/include # for arch drivers
