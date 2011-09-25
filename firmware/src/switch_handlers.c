@@ -83,6 +83,15 @@ static int last_hazard_time = 0;
 void hazards_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_hazard_time > 50) {
+
+		/* if indicators are on turn them off */
+		if (left_indicator || right_indicator) {
+			left_indicator = 0;
+			right_indicator = 0;
+			left_led(0);
+			right_led(0);
+		}
+
 		if (hazards) {
 			hazards = 0;
 			left_led(0);
@@ -102,6 +111,10 @@ static int last_left_indicator_time = 0;
 void left_indicator_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_left_indicator_time > 50) {
+		/* if hazards are on turn them off */
+		if (hazards)
+			hazards = 0;
+
 		if (left_indicator) {
 			left_indicator = 0;
 			left_led(0);
@@ -120,6 +133,10 @@ static int last_right_indicator_time = 0;
 void right_indicator_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_right_indicator_time > 50) {
+		/* if hazards are on turn them off */
+		if (hazards)
+			hazards = 0;
+
 		if (right_indicator) {
 			right_indicator = 0;
 			right_led(0);
