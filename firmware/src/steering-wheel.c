@@ -45,12 +45,11 @@
 #include <arch/types.h>
 #include <arch/adc.h>
 
-#define VELOCITY_MAX 40 /* max velocity in m/s */
+#define VELOCITY_MAX 40.0 /* max velocity in m/s */
 
-uint32_t  cruise = 0;                             /* are we in cruise? */
+/* general variables */
 uint32_t  horn = 0;                               /* is the horn on */
 uint32_t  brake = 0;                              /* is the brake on? */
-
 uint32_t  precharging = 0;                        /* are we trying to precharge? */
 uint32_t  discharging = 0;                        /* are we trying to discharge? */
 uint32_t  precharged = 0;                         /* are we precharged? */
@@ -59,13 +58,16 @@ uint32_t  precharge_timeout = 0;                  /* have we timed out waiting? 
 sc_time_t precharge_switch_on_time = 0;           /* the time someone pressed (and not released) the precharge switch */
 sc_time_t precharge_discharge_request_time = 0;   /* the time we started sending out a precharge or discharge request */
 
-float     velocity = VELOCITY_MAX;                /* what's the current velocity in m/s? */
+/* wavesculptor related variables */
+uint32_t  cruise = 0;                             /* are we in cruise? */
 float     bus_current = 0.0;                      /* what's our bus_current setpoint? */
 float     motor_current = 0.0;                    /* what's our motor current setpoint? */
 uint32_t  throttle = 0;                           /* what's the throttle paddle position? */
 uint32_t  regen = 0;                              /* what's the regen paddle position? */
-int32_t   current_velocity = 0.0;                 /* our current speed from the wavesculptor */
+float     set_velocity = VELOCITY_MAX;            /* what's the current velocity in m/s? */
+float     current_velocity = 0.0;                 /* our current speed from the wavesculptor */
 
+/* indicator related variables */
 uint32_t  hazards = 1;                            /* are hazards on? */
 uint32_t  hazards_state = 0;                      /* what's the current state of the hazards? */
 uint32_t  left_indicator = 0;                     /* is the left indicator on? */
@@ -73,6 +75,7 @@ uint32_t  right_indicator = 0;                    /* is the right indicator on? 
 uint32_t  left_indicator_state = 0;               /* what's the current state of the left indicator? */
 uint32_t  right_indicator_state = 0;              /* what's the current state of the right indicator? */
 
+/* switch interrupt handlers */
 extern void speed_hold_handler();
 extern void speed_down_handler();
 extern void speed_up_handler();
@@ -83,9 +86,9 @@ extern void precharge_handler();
 extern void left_indicator_handler();
 extern void right_indicator_handler();
 
+/* wavesculptor and inchannel handlers and init functions */
 extern void init_ws_in_channels(void);
 extern void handle_ws_drive_commands(float velocity, float bus_current, float motor_current);
-
 extern void init_scandal_in_channels(void);
 extern void precharge_status_handler(int32_t value, uint32_t src_time);
 
@@ -209,56 +212,6 @@ int main(void) {
 		 * the number of errors and the version of scandal */
 		handle_scandal();
 
-		/* Basic driver controls loop:
-
-			precharged = 0
-			velocity = 0
-			motor_current = 0
-			cruise = 0
-			braking = 0
-
-			while (1)
-
-				if not precharged
-					listen for precharge button press
-						send to dcdc
-							listen for message from dcdc
-								precharged = 1
-
-				else if precharged
-
-					listen for precharge button press
-						send to dcdc
-							listen for message from dcdc
-								precharged = 0
-
-					if not braking
-
-						listen for brake pedal sensor
-							braking = sensor
-
-						if not cruise && %accelerator > 0
-							motor current = %accelerator
-							listen for cruise button press
-								cruise = current speed
-						else If cruise
-							listen for cruise button press
-								cruise = 0
-						else
-							velocity = 0
-							motor_current = 0
-
-						if %regen > 0
-							motor current = %regen
-
-						if ws20
-							velocity = m/s 
-						else if ws22
-							velocity = rpm
-
-						send ws drive commands (motor_current, velocity) at least every 200ms
-		*/
-
 		ADC_Read(REGEN_ADC_CHANNEL);
 		ADC_Read(ACCELERATOR_ADC_CHANNEL);
 
@@ -287,20 +240,36 @@ int main(void) {
 
 		/* turn on delay, the paddles seem to read crazy at turn on */
 		if (sc_get_timer() > 2000) {
-			if (!cruise && throttle_float > 0.0) {
-				velocity = VELOCITY_MAX;
+
+			set_velocity = 0.0;
+			motor_current = 0.0;
+			bus_current = 0.0;
+
+			/* we want to move */
+			if (!brake && !cruise && throttle_float > 0.0) {
+				set_velocity = VELOCITY_MAX;
 				bus_current = 1.0;
 				motor_current = throttle_float;
-				/* call the drive command handler */
-				handle_ws_drive_commands(velocity, bus_current, motor_current);
 
-			} else if (cruise) {
-				velocity = current_velocity;
+			/* we're in cruise control, use velocity as control */
+			} else if (cruise && !brake) {
+				set_velocity = current_velocity;
 				bus_current = 1.0;
 				motor_current = 1.0;
-				/* call the drive command handler */
-				handle_ws_drive_commands(velocity, bus_current, motor_current);
 			}
+
+			/* regen */
+			if (regen_float > 0.0) {
+				cruise = 0;
+				GPIO_SetValue(CRUISE_LED_PORT, CRUISE_LED_BIT, 1);
+
+				set_velocity = 0.0;
+				bus_current = 1.0 - regen_float;
+				motor_current = 1.0;
+			}
+
+			/* call the drive command handler */
+			handle_ws_drive_commands(set_velocity, bus_current, motor_current);
 		}
 
 		/* stuff to do at 1s intervals */
@@ -317,7 +286,7 @@ int main(void) {
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, throttle);
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, regen);
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int)(current_velocity*100.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int32_t)(current_velocity));
 
 			/* flash the hazards */
 			if (hazards) {
@@ -352,7 +321,7 @@ int main(void) {
 
 			/* flash the right indicator */
 			} else if (right_indicator) {
-				/* if the left indicator is already on, turn if off */
+				/* if the left indicator is already on, turn it off */
 				if (left_indicator)
 					left_indicator = 0;
 

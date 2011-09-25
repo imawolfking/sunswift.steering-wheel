@@ -8,7 +8,7 @@
 extern int cruise;
 extern int hazards;
 extern int horn;
-extern float velocity;
+extern float set_velocity;
 extern int brake;
 extern int left_indicator;
 extern int right_indicator;
@@ -43,7 +43,7 @@ static int last_speed_up_time = 0;
 void speed_up_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_speed_up_time > 50)
-		velocity += 0.5;
+		set_velocity += 0.5;
 
 	last_speed_up_time = sc_get_timer();
 
@@ -55,7 +55,7 @@ static int last_speed_down_time = 0;
 void speed_down_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_speed_down_time > 50)
-		velocity -= 0.5;
+		set_velocity -= 0.5;
 
 	last_speed_down_time = sc_get_timer();
 
@@ -137,8 +137,12 @@ void right_indicator_handler() {
 static int last_brake_time = 0;
 void brake_handler() {
 	/* debouncing */
-	if (sc_get_timer() - last_brake_time > 50)
-		brake ^= 1;
+	if (sc_get_timer() - last_brake_time > 50) {
+		if (brake)
+			brake = 0;
+		else
+			brake = 1;
+	}
 
 	last_brake_time = sc_get_timer();
 

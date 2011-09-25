@@ -1,6 +1,7 @@
 #include <scandal/wavesculptor.h>
 #include <scandal/tritium.h>
 #include <scandal/message.h>
+#include <scandal/leds.h>
 #include <project/target_config.h>
 
 sc_time_t ws_last_drive_command_time;
