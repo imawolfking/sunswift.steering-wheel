@@ -19,15 +19,11 @@
 #define BRAKE_PORT      PORT2
 #define BRAKE_BIT       8
 
+/* lets just use the red/yellow led stuff for the left and right leds, see leds_annexure.h */
 #define RED_LED_PORT     RIGHT_LED_PORT
 #define RED_LED_BIT      RIGHT_LED_BIT
 #define YELLOW_LED_PORT  LEFT_LED_PORT
 #define YELLOW_LED_BIT   LEFT_LED_BIT
-
-#define left_led(x)  yellow_led(x)
-#define right_led(x) red_led(x)
-#define toggle_left_led()  toggle_yellow_led()
-#define toggle_right_led() toggle_red_led()
 
 /* Switch defines */
 #define HORN_SWITCH_PORT PORT2
@@ -96,4 +92,6 @@
 
 #define WS_TIME_BETWEEN_DRIVE_COMMANDS_MS 150
 #define PRECHARGE_SWITCH_HOLD_TIME_MS     3000
-#define PRECHARGE_DISCHARGE_TIMEOUT_MS    5000
+#define PRECHARGE_DISCHARGE_TIMEOUT_MS    30000
+#define REVERSE_SWITCH_HOLD_TIME_MS       3000
+

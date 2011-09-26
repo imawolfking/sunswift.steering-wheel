@@ -4,14 +4,22 @@
 #include <project/target_config.h>
 #include <scandal/leds.h>
 #include <project/leds_annexure.h>
+#include <project/conversion.h>
 
 extern int cruise;
+extern int cruise_led_flash;
 extern int hazards;
 extern int horn;
 extern float set_velocity;
 extern int brake;
 extern int left_indicator;
 extern int right_indicator;
+extern int rear_vision;
+
+extern int reverse;
+extern sc_time_t reverse_switch_on_time;
+extern int reverse_switch;
+
 extern sc_time_t precharge_discharge_request_time;
 extern sc_time_t precharge_switch_on_time;
 extern int precharge_timeout;
@@ -26,10 +34,10 @@ void speed_hold_handler() {
 	if (sc_get_timer() >= last_speed_hold_time + 200) {
 		if (cruise) {
 			cruise = 0;
-			GPIO_SetValue(CRUISE_LED_PORT, CRUISE_LED_BIT, 1);
+			cruise_led(0);
 		} else {
 			cruise = 1;
-			GPIO_SetValue(CRUISE_LED_PORT, CRUISE_LED_BIT, 0);
+			cruise_led(1);
 		}
 	}
 
@@ -43,9 +51,11 @@ static int last_speed_up_time = 0;
 void speed_up_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_speed_up_time > 50)
-		set_velocity += 0.5;
+		set_velocity += kph2mps(0.5);
 
 	last_speed_up_time = sc_get_timer();
+
+	cruise_led_flash = 20;
 
 	/* ack the interrupt */
 	GPIO_IntClear(SPEED_UP_SWITCH_PORT, SPEED_UP_SWITCH_BIT);
@@ -55,7 +65,9 @@ static int last_speed_down_time = 0;
 void speed_down_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_speed_down_time > 50)
-		set_velocity -= 0.5;
+		set_velocity -= kph2mps(0.5);
+
+	cruise_led_flash = 20;
 
 	last_speed_down_time = sc_get_timer();
 
@@ -167,6 +179,22 @@ void brake_handler() {
 	GPIO_IntClear(BRAKE_PORT, BRAKE_BIT);
 }
 
+static int last_rear_vision_time = 0;
+void rear_vision_handler() {
+	/* debouncing */
+	if (sc_get_timer() - last_rear_vision_time > 50) {
+		if (rear_vision)
+			rear_vision = 0;
+		else
+			rear_vision = 1;
+	}
+
+	last_rear_vision_time = sc_get_timer();
+
+	/* ack the interrupt */
+	GPIO_IntClear(REAR_VISION_SWITCH_PORT, REAR_VISION_SWITCH_BIT);
+}
+
 static int last_precharge_time = 0;
 void precharge_handler() {
 	/* debouncing */
@@ -205,3 +233,41 @@ void precharge_handler() {
 	/* ack the interrupt */
 	GPIO_IntClear(PRECHARGE_SWITCH_PORT, PRECHARGE_SWITCH_BIT);
 }
+
+static int last_reverse_time = 0;
+void reverse_handler() {
+	/* debouncing */
+	if (sc_get_timer() >= last_reverse_time + 50) {
+		/* reverse switch was on, has been released. Check time */
+		if (reverse_switch) {
+			reverse_switch = 0;
+
+			/* the main loop also tests for the button press, only do this if we're not already precharging */ 
+			if (!reverse) {
+				/* we are now trying to get into reverse */
+				if (sc_get_timer() >= reverse_switch_on_time + REVERSE_SWITCH_HOLD_TIME_MS) {
+					if (reverse) {
+						reverse = 0;
+						reverse_led(0);
+					} else {
+						reverse = 1;
+						reverse_led(1);
+					}
+				} else {
+					reverse_led(0);
+				}
+			}
+
+		/* precharge switch has been pressed */
+		} else {
+			reverse_switch = 1;
+			reverse_switch_on_time = sc_get_timer();
+		}
+	}
+
+	last_reverse_time = sc_get_timer();
+
+	/* ack the interrupt */
+	GPIO_IntClear(REV_SWITCH_PORT, REV_SWITCH_BIT);
+}
+
