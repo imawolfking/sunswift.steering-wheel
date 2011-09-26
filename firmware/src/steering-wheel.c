@@ -477,9 +477,21 @@ int main(void) {
 
 			if(precharged) {
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+				scandal_delay(10);
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+				scandal_delay(10);
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+				scandal_delay(10);
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
 				precharged = 0;
 				precharge_led(0);
 			} else {
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
+				scandal_delay(10);
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
+				scandal_delay(10);
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
+				scandal_delay(10);
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 				precharged = 1;
 				precharge_led(1);
