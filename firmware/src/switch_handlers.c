@@ -20,6 +20,10 @@ extern int reverse;
 extern sc_time_t reverse_switch_on_time;
 extern int reverse_switch;
 
+extern int forward;
+extern sc_time_t forward_switch_on_time;
+extern int forward_switch;
+
 extern sc_time_t precharge_discharge_request_time;
 extern sc_time_t precharge_switch_on_time;
 extern int precharge_timeout;
@@ -36,8 +40,13 @@ void speed_hold_handler() {
 			cruise = 0;
 			cruise_led(0);
 		} else {
-			cruise = 1;
-			cruise_led(1);
+			/* we don't want cruise in reverse */
+			if (reverse) {
+				cruise_led_flash = 20;
+			} else {
+				cruise = 1;
+				cruise_led(1);
+			}
 		}
 	}
 
@@ -234,40 +243,72 @@ void precharge_handler() {
 	GPIO_IntClear(PRECHARGE_SWITCH_PORT, PRECHARGE_SWITCH_BIT);
 }
 
+/* the timeouts are handled in the main loop */
 static int last_reverse_time = 0;
 void reverse_handler() {
 	/* debouncing */
 	if (sc_get_timer() >= last_reverse_time + 50) {
+
 		/* reverse switch was on, has been released. Check time */
 		if (reverse_switch) {
 			reverse_switch = 0;
 
-			/* the main loop also tests for the button press, only do this if we're not already precharging */ 
-			if (!reverse) {
-				/* we are now trying to get into reverse */
-				if (sc_get_timer() >= reverse_switch_on_time + REVERSE_SWITCH_HOLD_TIME_MS) {
-					if (reverse) {
-						reverse = 0;
-						reverse_led(0);
-					} else {
-						reverse = 1;
-						reverse_led(1);
-					}
-				} else {
-					reverse_led(0);
-				}
+			/* if we didn't wait long enough, just turn the LED off and leave it */
+			if (!(sc_get_timer() >= reverse_switch_on_time + REVERSE_SWITCH_HOLD_TIME_MS)) {
+				reverse_led(0);
+
+			/* if we did wait long enough, but we're already in reverse, just leave it */
+			} else {
+				if (reverse)
+					goto out;
 			}
 
-		/* precharge switch has been pressed */
+		/* reverse switch has been pressed */
 		} else {
 			reverse_switch = 1;
 			reverse_switch_on_time = sc_get_timer();
 		}
 	}
 
+
+out:
 	last_reverse_time = sc_get_timer();
 
 	/* ack the interrupt */
 	GPIO_IntClear(REV_SWITCH_PORT, REV_SWITCH_BIT);
+}
+
+/* the timeouts are handled in the main loop */
+static int last_forward_time = 0;
+void forward_handler() {
+	/* debouncing */
+	if (sc_get_timer() >= last_forward_time + 50) {
+
+		/* forward switch was on, has been released. Check time */
+		if (forward_switch) {
+			forward_switch = 0;
+
+			/* if we didn't wait long enough with the hold, turn the LED off */
+			if (!(sc_get_timer() >= forward_switch_on_time + FWD_SWITCH_HOLD_TIME_MS)) {
+				reverse_led(0);
+
+			/* if we did wait long enough, but we're already going foward, just leave it */
+			} else {
+				if (!reverse)
+					goto out;
+			}
+
+		/* forward switch has been pressed */
+		} else {
+			forward_switch = 1;
+			forward_switch_on_time = sc_get_timer();
+		}
+	}
+
+out:
+	last_forward_time = sc_get_timer();
+
+	/* ack the interrupt */
+	GPIO_IntClear(FWD_SWITCH_PORT, FWD_SWITCH_BIT);
 }
 

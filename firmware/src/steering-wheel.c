@@ -57,7 +57,7 @@
 #include <arch/adc.h>
 
 #define VELOCITY_MAX          40.0    /* max velocity in m/s */
-#define VELOCITY_REVERSE_MAX  -1.0    /* max velocity in m/s */
+#define VELOCITY_REVERSE_MAX  -10.0    /* max velocity in m/s */
 #define WHEEL_DIAMETER        0.4064  /* wheel diameter in meters. currently = 16" tyre * 2.54cm = 0.4064 */
 
 /* general variables */
@@ -82,7 +82,10 @@ float     set_velocity = VELOCITY_MAX;            /* what's the current velocity
 float     current_velocity = 0.0;                 /* our current speed from the wavesculptor */
 int       reverse = 0;                            /* are we in reverse? */
 int       reverse_switch = 0;                     /* are we waiting for the button hold time? */
-sc_time_t reverse_switch_on_time = 0;             /* the time someone pressed (and not released) the precharge switch */
+sc_time_t reverse_switch_on_time = 0;             /* the time someone pressed (and not released) the reverse switch */
+int       forward_switch = 0;                     /* are we waiting for the button hold time? */
+sc_time_t forward_switch_on_time = 0;             /* the time someone pressed (and not released) the forward switch */
+float     current_bus_voltage;                    /* the current bus voltage from the wavesculptor */
 
 /* indicator related variables */
 uint32_t  hazards = 1;                            /* are hazards on? */
@@ -104,6 +107,7 @@ extern void precharge_handler();
 extern void left_indicator_handler();
 extern void right_indicator_handler();
 extern void reverse_handler();
+extern void forward_handler();
 extern void rear_vision_handler();
 
 /* wavesculptor and inchannel handlers and init functions */
@@ -213,6 +217,14 @@ void setup(void) {
 		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_DOUBLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
 		 &reverse_handler);
 
+	/* Forward switch */
+	GPIO_SetFunction(FWD_SWITCH_PORT, FWD_SWITCH_BIT, GPIO_PIO, GPIO_MODE_NONE);
+	GPIO_SetDir(FWD_SWITCH_PORT, FWD_SWITCH_BIT, 0);
+
+	GPIO_RegisterInterruptHandler(FWD_SWITCH_PORT, FWD_SWITCH_BIT,
+		GPIO_INTERRUPT_SENSE_EDGE, GPIO_INTERRUPT_DOUBLE_EDGE, GPIO_INTERRUPT_EVENT_NONE,
+		 &forward_handler);
+
 	/* Rear vision switch */
 	GPIO_SetFunction(REAR_VISION_SWITCH_PORT, REAR_VISION_SWITCH_BIT, GPIO_PIO, GPIO_MODE_NONE);
 	GPIO_SetDir(REV_SWITCH_PORT, REV_SWITCH_BIT, 0);
@@ -317,8 +329,8 @@ int main(void) {
 				GPIO_SetValue(CRUISE_LED_PORT, CRUISE_LED_BIT, 1);
 
 				set_velocity = 0.0;
-				bus_current = 1.0 - regen;
-				motor_current = 1.0;
+				bus_current = 1.0;
+				motor_current = 1.0 - regen;
 			}
 
 			/* Call the drive command handler.
@@ -342,6 +354,13 @@ int main(void) {
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int32_t)(current_velocity));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_BUSVOLTS, (int32_t)(current_bus_voltage*100.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, (int32_t)(set_velocity));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
+			scandal_send_channel(TELEM_LOW, 40, reverse_switch);
+			scandal_send_channel(TELEM_LOW, 41, forward_switch);
 
 			/* send out the rear vision channel, this is every second so that we ensure
 			 * if we lose a message we don't get into a silly state */
@@ -447,10 +466,14 @@ int main(void) {
 
 		/* the user is holding the reverse switch. It we're past the timeout value, let them have it */
 		if (reverse_switch && (sc_get_timer() >= reverse_switch_on_time + REVERSE_SWITCH_HOLD_TIME_MS)) {
-			if (reverse)
-				reverse = 0;
-			else
+			if (!reverse)
 				reverse = 1;
+		}
+
+		/* the user is holding the forward switch. It we're past the timeout value, let them have it */
+		if (forward_switch && (sc_get_timer() >= forward_switch_on_time + FWD_SWITCH_HOLD_TIME_MS)) {
+			reverse = 0;
+			reverse_led(0);
 		}
 
 		/* stuff to do at 100ms intervals */
@@ -471,7 +494,7 @@ int main(void) {
 
 			/* if the user is holding the reverse switch and the timeout hasn't passed, flash
 			 * the LED fast */
-			if (reverse_switch && !reverse)
+			if ((reverse_switch && !reverse) || (forward_switch && reverse))
 				toggle_reverse_led();
 
 			/* Update the timer */
@@ -480,19 +503,20 @@ int main(void) {
 
 		/* stuff to do at 500ms intervals */
 		if(sc_get_timer() >= five_hundred_ms_timer + 500) {
-			/* are we waiting for a message from the smartdcdc? or have we timed out */
+			/* are we waiting for a message from the smartdcdc? */
 			if (precharging || discharging)
 				toggle_precharge_led();
 
+			/* or have we timed out waiting for the smartDCDC? */
 			if (precharge_timeout) {
 				toggle_precharge_led();
 				precharge_timeout--;
 			}
 
 			/* the reverse LED flashes slow if we're in reverse */
-			if (reverse)
+			if (reverse && !reverse_switch && !forward_switch)
 				toggle_reverse_led();
-	
+
 			/* Update the timer */
 			five_hundred_ms_timer = sc_get_timer();
 		}

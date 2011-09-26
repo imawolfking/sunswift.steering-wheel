@@ -4,11 +4,13 @@
 #include <scandal/leds.h>
 #include <project/target_config.h>
 
+
 sc_time_t ws_last_drive_command_time;
 extern float current_velocity;
+extern float current_bus_voltage;
 
 void ws_bus_handler(float bus_current, float bus_voltage, uint32_t time) {
-
+	current_bus_voltage = bus_voltage;
 }
 
 void ws_temp_handler(float hs_temp, float motor_temp, uint32_t time) {
@@ -37,7 +39,7 @@ void handle_ws_drive_commands(float velocity, float bus_current, float motor_cur
 
 		scandal_send_ws_drive_command(DC_DRIVE, velocity, motor_current);
 		scandal_send_ws_drive_command(DC_POWER, 0.0, bus_current);
-		scandal_send_ws_id(DC_BASE, "TRIb", 4);
+//		scandal_send_ws_id(DC_BASE, "TRIb", 4);
 
 		ws_last_drive_command_time = sc_get_timer();
 
