@@ -6,6 +6,8 @@
 #include <project/leds_annexure.h>
 #include <project/conversion.h>
 
+#define INTELLIGENT_PRECHARGE 0
+
 extern int cruise;
 extern int cruise_led_flash;
 extern int hazards;
@@ -31,6 +33,7 @@ extern int precharging;
 extern int discharging;
 extern int precharged;
 extern int precharge_switch;
+extern int precharge_caught;
 
 static int last_speed_hold_time = 0;
 void speed_hold_handler() {
@@ -212,23 +215,22 @@ void precharge_handler() {
 		if (precharge_switch) {
 			precharge_switch = 0;
 
-			/* the main loop also tests for the button press, only do this if we're not already precharging */ 
-			if (!precharging) {
-				/* we are now sending the precharge signal out */
-				if (sc_get_timer() >= precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS) {
-					precharge_discharge_request_time = sc_get_timer();
-					precharge_timeout = 0;
-					if (precharged) {
-						precharging = 0;
-						discharging = 1;
-					} else {
-						precharging = 1;
-						discharging = 0;
-					}
-				} else {
+#ifndef INTELLIGENT_PRECHARGE
+			if ((sc_get_timer() >= precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS)) {
+				if (precharged) {
+					precharged = 0;
 					precharge_led(0);
+					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+				} else {
+					precharge_led(1);
+					precharged = 1;
+					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 				}
 			}
+#else
+			if (precharge_caught)
+				precharge_caught = 0;
+#endif
 
 		/* precharge switch has been pressed */
 		} else {

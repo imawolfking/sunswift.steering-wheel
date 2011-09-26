@@ -63,13 +63,17 @@
 /* general variables */
 uint32_t  horn = 0;                               /* is the horn on */
 uint32_t  brake = 0;                              /* is the brake on? */
-uint32_t  precharging = 0;                        /* are we trying to precharge? */
-uint32_t  discharging = 0;                        /* are we trying to discharge? */
 uint32_t  precharged = 0;                         /* are we precharged? */
 uint32_t  precharge_switch = 0;                   /* are we waiting for the button hold time? */
-uint32_t  precharge_timeout = 0;                  /* have we timed out waiting? */
 sc_time_t precharge_switch_on_time = 0;           /* the time someone pressed (and not released) the precharge switch */
+#ifdef INTELLIGENT_PRECHARGE
+uint32_t  precharging = 0;                        /* are we trying to precharge? */
+uint32_t  discharging = 0;                        /* are we trying to discharge? */
+uint32_t  precharge_timeout = 0;                  /* have we timed out waiting? */
 sc_time_t precharge_discharge_request_time = 0;   /* the time we started sending out a precharge or discharge request */
+#else
+int       precharge_caught = 0;                   /* did the main loop catch the precharge button timeout? */
+#endif
 uint32_t  power_on_delay_completed = 0;           /* are we past the power on delay? */
 
 /* wavesculptor related variables */
@@ -342,13 +346,17 @@ int main(void) {
 		/* stuff to do at 1s intervals */
 		if(sc_get_timer() >= one_sec_timer + 1000) {
 
+			/* Update the timer */
+			one_sec_timer = sc_get_timer();
+
+#if 0
 			/* send out the precharge channel, this is every second so that we ensure
 			 * if we lose a message we don't get into a silly state */
-			if (precharging)
+			if (precharging || precharged)
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
-			else if (discharging)
+			else if(discharging || !precharged)
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
-
+#endif
 			/* send out the human readable channels */
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, (int)(throttle*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
@@ -359,8 +367,6 @@ int main(void) {
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
-			scandal_send_channel(TELEM_LOW, 40, reverse_switch);
-			scandal_send_channel(TELEM_LOW, 41, forward_switch);
 
 			/* send out the rear vision channel, this is every second so that we ensure
 			 * if we lose a message we don't get into a silly state */
@@ -420,9 +426,11 @@ int main(void) {
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_LH_IND, 0);
 			}
 
+#ifdef INTELLIGENT_PRECHARGE
 			/* if we timed out waiting for a precharge or discharge, send a message */
 			if (precharge_timeout > 0)
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_PRCH_TIMEOUT, 1);
+#endif
 
 			/* turn the brake lights on or off*/
 			if (brake)
@@ -436,10 +444,9 @@ int main(void) {
 			else
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_HORN, 0);
 
-			/* Update the timer */
-			one_sec_timer = sc_get_timer();
 		}
 
+#ifdef INTELLIGENT_PRECHARGE
 		/* we timed out waiting for the smartDCDC */
 		if ((precharging || discharging) && 
 			(sc_get_timer() >= precharge_discharge_request_time + PRECHARGE_DISCHARGE_TIMEOUT_MS)) {
@@ -463,6 +470,22 @@ int main(void) {
 			precharge_discharge_request_time = sc_get_timer();
 			precharge_timeout = 0;
 		}
+#else
+		if (precharge_switch && (sc_get_timer() >= precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS)
+			&& !precharge_caught) {
+			precharge_caught = 1;
+
+			if(precharged) {
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+				precharged = 0;
+				precharge_led(0);
+			} else {
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
+				precharged = 1;
+				precharge_led(1);
+			}
+		}
+#endif
 
 		/* the user is holding the reverse switch. It we're past the timeout value, let them have it */
 		if (reverse_switch && (sc_get_timer() >= reverse_switch_on_time + REVERSE_SWITCH_HOLD_TIME_MS)) {
@@ -478,11 +501,19 @@ int main(void) {
 
 		/* stuff to do at 100ms intervals */
 		if(sc_get_timer() >= hundred_ms_timer + 100) {
+
+			/* Update the timer */
+			hundred_ms_timer = sc_get_timer();
+
+#ifdef INTELLIGENT_PRECHARGE
 			/* are we waiting for the button to be released */
 			/* if we have a precharge timeout, flash here AND below in the 500ms timer */
 			if ((precharge_switch && !precharging && !discharging) || precharge_timeout > 0)
 				toggle_precharge_led();
-
+#else
+			if (precharge_switch && (sc_get_timer() < precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS))
+				toggle_precharge_led();
+#endif
 			if (cruise_led_flash > 0) {
 				toggle_cruise_led();
 				cruise_led_flash--;
@@ -496,13 +527,15 @@ int main(void) {
 			 * the LED fast */
 			if ((reverse_switch && !reverse) || (forward_switch && reverse))
 				toggle_reverse_led();
-
-			/* Update the timer */
-			hundred_ms_timer = sc_get_timer();
 		}
 
 		/* stuff to do at 500ms intervals */
 		if(sc_get_timer() >= five_hundred_ms_timer + 500) {
+
+			/* Update the timer */
+			five_hundred_ms_timer = sc_get_timer();
+
+#ifdef INTELLIGENT_PRECHARGE
 			/* are we waiting for a message from the smartdcdc? */
 			if (precharging || discharging)
 				toggle_precharge_led();
@@ -512,13 +545,11 @@ int main(void) {
 				toggle_precharge_led();
 				precharge_timeout--;
 			}
+#endif
 
 			/* the reverse LED flashes slow if we're in reverse */
 			if (reverse && !reverse_switch && !forward_switch)
 				toggle_reverse_led();
-
-			/* Update the timer */
-			five_hundred_ms_timer = sc_get_timer();
 		}
 	}
 }
