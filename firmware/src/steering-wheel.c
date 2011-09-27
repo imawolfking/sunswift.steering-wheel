@@ -13,6 +13,12 @@
 	reverse and the user holds the reverse button down, we do nothing. We wait
 	for a forward command.
 
+	Paddles:
+	========
+		The ADCs seem to measure different max and min values on the two different
+		PCBs. Hence, there is a #define for STEERINGWHEEL_A or STEERINGWHEEL_B in
+		include/project/target_config.h
+
 	Swtich Descriptions:
 	====================
 		There are three hat switches with up/down left/right and center. 
@@ -166,11 +172,13 @@ int       precharge_caught = 0;                   /* did the main loop catch the
 uint32_t  wavesculptor_model = WS20;              /* which wavesculptor is attached? */
 int       cruise_led_flash = 0;                   /* flash the cruise led when we change speed */
 int       cruise = 0;                             /* are we in cruise? */
+float     cruise_velocity = 0.0;                  /* the requested cruise velocity */
 float     bus_current = 0.0;                      /* what's our bus_current setpoint? */
 float     motor_current = 0.0;                    /* what's our motor current setpoint? */
-float     set_velocity = VELOCITY_MAX;            /* what's the current velocity in m/s? */
+float     set_velocity = 0.0;                     /* what's the current velocity in m/s? */
 float     current_velocity = 0.0;                 /* our current speed from the wavesculptor */
 int       reverse = 0;                            /* are we in reverse? */
+int       reverse_led_fast_flash = 0;             /* flash the reverse led fast */
 int       reverse_switch = 0;                     /* are we waiting for the button hold time? */
 sc_time_t reverse_switch_on_time = 0;             /* the time someone pressed (and not released) the reverse switch */
 int       forward_switch = 0;                     /* are we waiting for the button hold time? */
@@ -363,18 +371,17 @@ int main(void) {
 		handle_scandal();
 
 		/* Wavesculptor related stuff */
-		{
 			/* Read the paddles */
 			ADC_Read(REGEN_ADC_CHANNEL);
 			ADC_Read(ACCELERATOR_ADC_CHANNEL);
 
-			/* A bit of munging for top and bottom of the ranges */
-			throttle = (float)(RIGHT_PADDLE_MAX - 
-				((int32_t)ADCValue[ACCELERATOR_ADC_CHANNEL] - RIGHT_PADDLE_MIN)) / 
+			/* A bit of munging for top and bottom of the ranges on the paddles */
+			throttle = (float)(RIGHT_PADDLE_MAX -
+				((int32_t)ADCValue[ACCELERATOR_ADC_CHANNEL] - RIGHT_PADDLE_MIN)) /
 				(float)RIGHT_PADDLE_MAX;
 
-			regen = (float)(LEFT_PADDLE_MAX - 
-				((int32_t)ADCValue[REGEN_ADC_CHANNEL] - LEFT_PADDLE_MIN)) / 
+			regen = (float)(LEFT_PADDLE_MAX -
+				((int32_t)ADCValue[REGEN_ADC_CHANNEL] - LEFT_PADDLE_MIN)) /
 				(float)LEFT_PADDLE_MAX;
 
 			/* If the throttle is below 5%, just zero it */
@@ -401,12 +408,16 @@ int main(void) {
 
 				/* Since we send out WS commands regardless of state, we should always zero
 				 * these variables first, and set them on particular events */
-				set_velocity = 0.0;
 				motor_current = 0.0;
 				bus_current = 0.0;
 
+				if (cruise && throttle > 0.0) {
+					cruise = 0;
+					cruise_led(0);
+				}
+
 				/* we want to move */
-				if (!brake && !cruise && throttle > 0.0) {
+				if (precharged && !brake && !cruise && throttle > 0.0) {
 					/* WS22 needs velocity in RPM */
 					if (wavesculptor_model == WS22)
 						set_velocity = mps2rpm(VELOCITY_MAX, WHEEL_DIAMETER);
@@ -422,20 +433,26 @@ int main(void) {
 					motor_current = throttle;
 
 				/* we're in cruise control, use velocity as control */
-				} else if (!brake && cruise) {
+				} else if (precharged && !brake && cruise) {
 					/* WS22 needs velocity in RPM */
 					if (wavesculptor_model == WS22)
-						set_velocity = mps2rpm(current_velocity, WHEEL_DIAMETER);
+						set_velocity = mps2rpm(cruise_velocity, WHEEL_DIAMETER);
 					/* WS22 needs velocity in meters per second */
 					else if (wavesculptor_model == WS20)
-						set_velocity = current_velocity;
+						set_velocity = cruise_velocity;
 
 					bus_current = 1.0;
 					motor_current = 1.0;
+
+				} else {
+					set_velocity = 0.0;
+					bus_current = 0.0;
+					motor_current = 0.0;
 				}
 
+
 				/* regen */
-				if (regen > 0.0) {
+				if (precharged && regen > 0.0) {
 					/* come out of cruise mode */
 					cruise = 0;
 					cruise_led(0);
@@ -451,8 +468,6 @@ int main(void) {
 				handle_ws_drive_commands(set_velocity, bus_current, motor_current);
 			}
 
-		} /* end wavesculptor stuff */
-
 		/* Stuff to do at 1s intervals. Most of this stuff is sending out CAN messages */
 		if(sc_get_timer() >= one_sec_timer + 1000) {
 
@@ -463,9 +478,9 @@ int main(void) {
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, (int)(throttle*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int32_t)(current_velocity));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int32_t)(current_velocity*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_BUSVOLTS, (int32_t)(current_bus_voltage*100.0));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, (int32_t)(set_velocity));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, mps2kph((int32_t)(set_velocity*100.0)));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
@@ -559,7 +574,7 @@ int main(void) {
 		} /* end 1s timer stuff */
 
 		/* Switch hold tests and other stuff that we need to test for */
-		{
+
 #ifdef INTELLIGENT_PRECHARGE
 			/* we also test for the precharge switch timeout. If we detect that the user has held the switch for long
 			 * enough, we just let them have it */
@@ -614,8 +629,6 @@ int main(void) {
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 				}
-			} else {
-				precharge_caught = 0;
 			}
 #endif
 
@@ -629,8 +642,6 @@ int main(void) {
 				reverse = 0;
 				reverse_led(0);
 			}
-
-		} /* end switch hold tests and other stuff */
 
 		/* stuff to do at 100ms intervals */
 		if(sc_get_timer() >= hundred_ms_timer + 100) {
@@ -647,6 +658,7 @@ int main(void) {
 			if (precharge_switch && (sc_get_timer() < precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS))
 				toggle_precharge_led();
 #endif
+
 			if (cruise_led_flash > 0) {
 				toggle_cruise_led();
 				cruise_led_flash--;
@@ -658,8 +670,14 @@ int main(void) {
 
 			/* if the user is holding the reverse switch and the timeout hasn't passed, flash
 			 * the LED fast */
-			if ((reverse_switch && !reverse) || (forward_switch && reverse))
+			if ((reverse_switch && !reverse) || (forward_switch && reverse)) {
 				toggle_reverse_led();
+
+			/* we were going forward when we tried to go into reverse, warn the user */
+			} else if (reverse_led_fast_flash) {
+				toggle_reverse_led();
+				reverse_led_fast_flash--;
+			}
 
 		} /* end 100ms timer stuff */
 
@@ -682,8 +700,14 @@ int main(void) {
 #endif
 
 			/* the reverse LED flashes slow if we're in reverse */
-			if (reverse && !reverse_switch && !forward_switch)
+			if (reverse && !reverse_switch && !forward_switch) {
 				toggle_reverse_led();
+
+			/* we were going forward when we tried to go into reverse, warn the user */
+			} else if (reverse_led_fast_flash) {
+				toggle_reverse_led();
+				reverse_led_fast_flash--;
+			}
 
 		} /* end 500ms timer stuff */
 

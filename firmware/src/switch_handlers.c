@@ -11,6 +11,8 @@
 /* general externs. declared in steering-wheel.c */
 extern int cruise;
 extern int cruise_led_flash;
+extern float cruise_velocity;
+extern float current_velocity;
 extern int hazards;
 extern int horn;
 extern float set_velocity;
@@ -19,6 +21,7 @@ extern int left_indicator;
 extern int right_indicator;
 extern int rear_vision;
 extern int reverse;
+extern int reverse_led_fast_flash;
 extern sc_time_t reverse_switch_on_time;
 extern int reverse_switch;
 extern int forward;
@@ -42,10 +45,11 @@ extern int precharge_caught;
 static int last_speed_hold_time = 0;
 void speed_hold_handler() {
 	/* debouncing */
-	if (sc_get_timer() >= last_speed_hold_time + 200) {
+	if (sc_get_timer() >= last_speed_hold_time + 50) {
 		if (cruise) {
 			cruise = 0;
 			cruise_led(0);
+			cruise_velocity = 0.0;
 		} else {
 			/* we don't want cruise in reverse */
 			if (reverse) {
@@ -53,6 +57,7 @@ void speed_hold_handler() {
 			} else {
 				cruise = 1;
 				cruise_led(1);
+				cruise_velocity = current_velocity;
 			}
 		}
 	}
@@ -66,12 +71,14 @@ void speed_hold_handler() {
 static int last_speed_up_time = 0;
 void speed_up_handler() {
 	/* debouncing */
-	if (sc_get_timer() - last_speed_up_time > 50)
-		set_velocity += kph2mps(0.5);
+	if (sc_get_timer() - last_speed_up_time > 50) {
+		if (cruise) {
+			cruise_velocity += kph2mps(0.5);
+			cruise_led_flash = 20;
+		}
+	}
 
 	last_speed_up_time = sc_get_timer();
-
-	cruise_led_flash = 20;
 
 	/* ack the interrupt */
 	GPIO_IntClear(SPEED_UP_SWITCH_PORT, SPEED_UP_SWITCH_BIT);
@@ -80,10 +87,12 @@ void speed_up_handler() {
 static int last_speed_down_time = 0;
 void speed_down_handler() {
 	/* debouncing */
-	if (sc_get_timer() - last_speed_down_time > 50)
-		set_velocity -= kph2mps(0.5);
-
-	cruise_led_flash = 20;
+	if (sc_get_timer() - last_speed_down_time > 50) {
+		if (cruise) {
+			cruise_velocity -= kph2mps(0.5);
+			cruise_led_flash = 20;
+		}
+	}
 
 	last_speed_down_time = sc_get_timer();
 
@@ -183,10 +192,13 @@ static int last_brake_time = 0;
 void brake_handler() {
 	/* debouncing */
 	if (sc_get_timer() - last_brake_time > 50) {
-		if (brake)
+		if (brake) {
 			brake = 0;
-		else
+		} else {
+			cruise = 0;
+			cruise_led(0);
 			brake = 1;
+		}
 	}
 
 	last_brake_time = sc_get_timer();
@@ -216,7 +228,7 @@ void rear_vision_handler() {
 static int last_precharge_time = 0;
 void precharge_handler() {
 	/* debouncing */
-	if (sc_get_timer() >= last_precharge_time + 50) {
+	if (sc_get_timer() >= last_precharge_time + 200) {
 		/* precharge switch was on, has been released. Check time */
 		if (precharge_switch) {
 			precharge_switch = 0;
@@ -253,8 +265,10 @@ void precharge_handler() {
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 				}
-			} else {
-				precharge_caught = 0;
+
+			/* we released before the hold time */
+			} else if (!precharge_caught) {
+				precharge_led(0);
 			}
 #endif
 
@@ -298,11 +312,19 @@ void reverse_handler() {
 
 		/* reverse switch has been pressed */
 		} else {
-			reverse_switch = 1;
-			reverse_switch_on_time = sc_get_timer();
+			/* we're aready in reverse! */
+			if (reverse)
+				goto out;
+
+			/* only allow reverse if we're not currently moving */
+			if (current_velocity == 0) {
+				reverse_switch = 1;
+				reverse_switch_on_time = sc_get_timer();
+			} else {
+				reverse_led_fast_flash = 20;
+			}
 		}
 	}
-
 
 out:
 	last_reverse_time = sc_get_timer();
@@ -333,6 +355,11 @@ void forward_handler() {
 
 		/* forward switch has been pressed */
 		} else {
+
+			/* we're already going forward */
+			if (!reverse)
+				goto out;
+
 			forward_switch = 1;
 			forward_switch_on_time = sc_get_timer();
 		}

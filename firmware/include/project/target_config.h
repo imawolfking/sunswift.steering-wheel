@@ -1,5 +1,8 @@
 #include <arch/gpio.h>
 
+#define STEERINGWHEEL_A
+#undef  STEERINGWHEEL_B
+
 /* LED defines */
 #define PRCH_LED_PORT   PORT2
 #define PRCH_LED_BIT    9
@@ -81,11 +84,19 @@
 
 /* Other defines */
 
+#ifdef STEERINGWHEEL_A
 #define LEFT_PADDLE_MAX   996
 #define LEFT_PADDLE_MIN   15
-
 #define RIGHT_PADDLE_MAX  998
 #define RIGHT_PADDLE_MIN  15
+#endif
+
+#ifdef STEERINGWHEEL_B
+#define LEFT_PADDLE_MAX   890
+#define LEFT_PADDLE_MIN   3
+#define RIGHT_PADDLE_MAX  890
+#define RIGHT_PADDLE_MIN  3
+#endif
 
 #define REGEN_ADC_CHANNEL       3
 #define ACCELERATOR_ADC_CHANNEL 1
