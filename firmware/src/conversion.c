@@ -7,7 +7,7 @@ float mps2kph(float mps) {
 }
 
 float mps2rpm(float mps, float wheel_diameter) {
-	return (mps / (PI * wheel_diameter));
+	return 60.0 * (mps / (PI * wheel_diameter));
 }
 
 float kph2mps(float kph) {

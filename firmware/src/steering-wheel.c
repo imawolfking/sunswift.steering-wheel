@@ -169,7 +169,7 @@ int       precharge_caught = 0;                   /* did the main loop catch the
 #endif
 
 /* wavesculptor related variables */
-uint32_t  wavesculptor_model = WS20;              /* which wavesculptor is attached? */
+uint32_t  wavesculptor_model = WS22;              /* which wavesculptor is attached? */
 int       cruise_led_flash = 0;                   /* flash the cruise led when we change speed */
 int       cruise = 0;                             /* are we in cruise? */
 float     cruise_velocity = 0.0;                  /* the requested cruise velocity */
@@ -419,15 +419,21 @@ int main(void) {
 				/* we want to move */
 				if (precharged && !brake && !cruise && throttle > 0.0) {
 					/* WS22 needs velocity in RPM */
-					if (wavesculptor_model == WS22)
-						set_velocity = mps2rpm(VELOCITY_MAX, WHEEL_DIAMETER);
-					/* WS22 needs velocity in meters per second */
-					else if (wavesculptor_model == WS20)
-						set_velocity = VELOCITY_MAX;
+					if (wavesculptor_model == WS22) {
+						if (reverse)
+							set_velocity = mps2rpm(VELOCITY_REVERSE_MAX, WHEEL_DIAMETER);
+						else
+							set_velocity = mps2rpm(VELOCITY_MAX, WHEEL_DIAMETER);
 
+					/* WS22 needs velocity in meters per second */
+					} else if (wavesculptor_model == WS20) {
 					/* If we're reversing, set the speed to reverse_max */
-					if (reverse)
-						set_velocity = VELOCITY_REVERSE_MAX;
+						if (reverse)
+							set_velocity = VELOCITY_REVERSE_MAX;
+						else
+							set_velocity = VELOCITY_MAX;
+					}
+
 
 					bus_current = 1.0;
 					motor_current = throttle;

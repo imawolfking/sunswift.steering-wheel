@@ -1,7 +1,7 @@
 #include <arch/gpio.h>
 
-#define STEERINGWHEEL_A
-#undef  STEERINGWHEEL_B
+#undef STEERINGWHEEL_A
+#define  STEERINGWHEEL_B
 
 /* LED defines */
 #define PRCH_LED_PORT   PORT2
