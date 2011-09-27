@@ -1,13 +1,14 @@
 #include <arch/gpio.h>
-#include <scandal/timer.h>
+
+#include <scandal/utils.h>
 #include <scandal/message.h>
-#include <project/target_config.h>
 #include <scandal/leds.h>
+
+#include <project/target_config.h>
 #include <project/leds_annexure.h>
 #include <project/conversion.h>
 
-#define INTELLIGENT_PRECHARGE 0
-
+/* general externs. declared in steering-wheel.c */
 extern int cruise;
 extern int cruise_led_flash;
 extern int hazards;
@@ -17,24 +18,27 @@ extern int brake;
 extern int left_indicator;
 extern int right_indicator;
 extern int rear_vision;
-
 extern int reverse;
 extern sc_time_t reverse_switch_on_time;
 extern int reverse_switch;
-
 extern int forward;
 extern sc_time_t forward_switch_on_time;
 extern int forward_switch;
 
-extern sc_time_t precharge_discharge_request_time;
+/* precharge system externs. declared in steering-wheel.c */
 extern sc_time_t precharge_switch_on_time;
+extern sc_time_t precharge_discharge_request_time;
+extern int precharge_switch;
+extern int precharged;
+#ifdef INTELLIGENT_PRECHARGE
 extern int precharge_timeout;
 extern int precharging;
 extern int discharging;
-extern int precharged;
-extern int precharge_switch;
+#else
 extern int precharge_caught;
+#endif
 
+/* And now into the interrupt handlers */
 static int last_speed_hold_time = 0;
 void speed_hold_handler() {
 	/* debouncing */
@@ -207,6 +211,8 @@ void rear_vision_handler() {
 	GPIO_IntClear(REAR_VISION_SWITCH_PORT, REAR_VISION_SWITCH_BIT);
 }
 
+/* If we are doing intelligent precharge, then all that needs to happen in here is the
+ * switch state transition */
 static int last_precharge_time = 0;
 void precharge_handler() {
 	/* debouncing */
@@ -216,10 +222,16 @@ void precharge_handler() {
 			precharge_switch = 0;
 
 #ifndef INTELLIGENT_PRECHARGE
-			if ((sc_get_timer() >= precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS)) {
+			if ((sc_get_timer() >= precharge_switch_on_time + PRECHARGE_SWITCH_HOLD_TIME_MS)
+				&& !precharge_caught) {
+
+				precharge_caught = 1;
+
+				/* going into discharged state */
 				if (precharged) {
-					precharged = 0;
 					precharge_led(0);
+					precharged = 0;
+
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
@@ -227,9 +239,12 @@ void precharge_handler() {
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+
+				/* going into precharged state */
 				} else {
 					precharge_led(1);
 					precharged = 1;
+
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
@@ -238,15 +253,19 @@ void precharge_handler() {
 					scandal_delay(10);
 					scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 				}
-			}
-#else
-			if (precharge_caught)
+			} else {
 				precharge_caught = 0;
+			}
 #endif
 
 		/* precharge switch has been pressed */
 		} else {
 			precharge_switch = 1;
+
+#ifndef INTELLIGENT_PRECHARGE
+			precharge_caught = 0;
+#endif
+
 			precharge_switch_on_time = sc_get_timer();
 		}
 	}
