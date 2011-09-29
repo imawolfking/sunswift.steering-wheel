@@ -148,7 +148,7 @@
 
 #define VELOCITY_MAX          40.0    /* max velocity in m/s */
 #define VELOCITY_REVERSE_MAX  -10.0   /* max velocity in m/s */
-#define WHEEL_DIAMETER        0.4826  /* wheel diameter in meters. currently = 16" wheel + 3" tyre * 2.54cm = 0.4064 */
+#define WHEEL_DIAMETER        0.4826  /* wheel diameter in meters. currently = 16" wheel + 3" tyre * 2.54cm = 0.4826 */
 
 /* general variables */
 uint32_t  horn = 0;                               /* is the horn on */
@@ -434,7 +434,6 @@ int main(void) {
 							set_velocity = VELOCITY_MAX;
 					}
 
-
 					bus_current = 1.0;
 					motor_current = throttle;
 
@@ -455,7 +454,6 @@ int main(void) {
 					bus_current = 0.0;
 					motor_current = 0.0;
 				}
-
 
 				/* regen */
 				if (precharged && regen > 0.0) {
