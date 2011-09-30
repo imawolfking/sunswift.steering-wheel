@@ -101,12 +101,13 @@
 #define REGEN_ADC_CHANNEL       3
 #define ACCELERATOR_ADC_CHANNEL 1
 
-#define WS_TIME_BETWEEN_DRIVE_COMMANDS_MS 100
+/* this is twice as fast as the recommended 250ms interval for wavesculptor drive commands */
+#define WS_TIME_BETWEEN_DRIVE_COMMANDS_MS 125
 
 #define PRECHARGE_SWITCH_HOLD_TIME_MS     3000
 #define PRECHARGE_DISCHARGE_TIMEOUT_MS    30000
 #define REVERSE_SWITCH_HOLD_TIME_MS       3000
-#define FWD_SWITCH_HOLD_TIME_MS       3000
+#define FWD_SWITCH_HOLD_TIME_MS           3000
 
 #undef INTELLIGENT_PRECHARGE
 

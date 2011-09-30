@@ -78,7 +78,7 @@
 		in RPM. So the code here needs to know the tyre diameter. This should be an
 		in channel, but it's not at the moment. Hard coded to 16" + 3" for tyre.
 		We send out the drive commands every 100ms, twice as often as the minimum
-		of 200ms as specified in the manual.
+		of 250ms as specified in the manual.
 
 	Precharging system details
 	==========================
@@ -482,12 +482,11 @@ int main(void) {
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, (int)(throttle*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_VELOCITY, (int32_t)(current_velocity*100.0));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_BUSVOLTS, (int32_t)(current_bus_voltage*100.0));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, mps2kph((int32_t)(set_velocity*100.0)));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current));
 			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_WAVESCULPTOR_MODEL, wavesculptor_model);
 
 			/* send out the rear vision channel, this is every second so that we ensure
 			 * if we lose a message we don't get into a silly state */
