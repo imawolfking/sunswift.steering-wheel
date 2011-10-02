@@ -396,7 +396,7 @@ int main(void) {
 				throttle = 1.0;
 
 			/* If regen is below 5%, just zero it */
-			if (regen < 0.05 && > regen 0.0)
+			if (regen < 0.05 && regen > 0.0)
 				regen = 0.0;
 			/* else we were a bit too gratuitous with our MAX and MIN values, and we 
 			 * got negative, set it to max */
