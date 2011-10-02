@@ -566,6 +566,8 @@ int main(void) {
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 1);
 			else if(discharging || !precharged)
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
+#else
+			scandal_send_chanel(TELEM_LOW, STEERINGWHEEL_START, precharged);
 #endif
 
 			/* turn the brake lights on or off*/
