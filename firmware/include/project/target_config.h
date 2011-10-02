@@ -1,6 +1,8 @@
 #include <arch/gpio.h>
 
-#undef STEERINGWHEEL_A
+#include <scandal/devices.h>
+
+#undef   STEERINGWHEEL_A
 #define  STEERINGWHEEL_B
 
 /* LED defines */
@@ -109,5 +111,6 @@
 #define REVERSE_SWITCH_HOLD_TIME_MS       3000
 #define FWD_SWITCH_HOLD_TIME_MS           3000
 
-#undef INTELLIGENT_PRECHARGE
-
+#undef  INTELLIGENT_PRECHARGE
+#undef  WAVESCULPTOR_AUTODETECT
+#define DEFAULT_WAVESCULPTOR_MODEL        WS20

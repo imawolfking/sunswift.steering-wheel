@@ -21,6 +21,7 @@ void ws_status_handler(uint8_t rcv_err_count, uint8_t tx_err_count, uint16_t act
 
 }
 
+#ifdef WAVESCULPTOR_AUTODETECT
 void ws_base_handler(char *tritium_id, uint32_t serial_number, uint32_t time) {
 	/* TO88 is the id string that the WS22 sends out */
 	if (strncmp("TO88", tritium_id, 4) == 0)
@@ -29,7 +30,7 @@ void ws_base_handler(char *tritium_id, uint32_t serial_number, uint32_t time) {
 	else if (strncmp("TRIa", tritium_id, 4) == 0)
 		wavesculptor_model = WS20;
 }
-
+#endif
 
 void ws_velocity_handler(float vehicle_velocity, float motor_rpm, uint32_t time) {
 	current_velocity = vehicle_velocity;
@@ -38,7 +39,9 @@ void ws_velocity_handler(float vehicle_velocity, float motor_rpm, uint32_t time)
 void init_ws_in_channels(void) {
 	scandal_register_ws_bus_callback(&ws_bus_handler);
 	scandal_register_ws_status_callback(&ws_status_handler);
+#ifdef WAVESCULPTOR_AUTODETECT
 	scandal_register_ws_base_callback(&ws_base_handler);
+#endif
 	scandal_register_ws_velocity_callback(&ws_velocity_handler);
 }
 

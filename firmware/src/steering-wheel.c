@@ -169,7 +169,7 @@ int       precharge_caught = 0;                   /* did the main loop catch the
 #endif
 
 /* wavesculptor related variables */
-uint32_t  wavesculptor_model = WS22;              /* which wavesculptor is attached? */
+uint32_t  wavesculptor_model = DEFAULT_WAVESCULPTOR_MODEL; /* which wavesculptor is attached? default WS20*/
 int       cruise_led_flash = 0;                   /* flash the cruise led when we change speed */
 int       cruise = 0;                             /* are we in cruise? */
 float     cruise_velocity = 0.0;                  /* the requested cruise velocity */
@@ -385,19 +385,25 @@ int main(void) {
 				(float)LEFT_PADDLE_MAX;
 
 			/* If the throttle is below 5%, just zero it */
-			if (throttle < 0.05)
+			if (throttle < 0.05 && throttle > 0.0)
 				throttle = 0.0;
-
-			/* If regen is below 5%, just zero it */
-			if (regen < 0.05)
-				regen = 0.0;
-
+			/* else we were a bit too gratuitous with our MAX and MIN values, and we 
+			 * got negative, set it to max */
+			else if (throttle < 0.0)
+				throttle = 1.0;
 			/* If the throttle is above 100%, make it 100% */
-			if (throttle > 1.0)
+			else if (throttle > 1.0)
 				throttle = 1.0;
 
+			/* If regen is below 5%, just zero it */
+			if (regen < 0.05 && > regen 0.0)
+				regen = 0.0;
+			/* else we were a bit too gratuitous with our MAX and MIN values, and we 
+			 * got negative, set it to max */
+			else if (regen < 0.0)
+				regen = 1.0;
 			/* If regen is above 100%, make it 100% */
-			if (regen > 1.0)
+			else if (regen > 1.0)
 				regen = 1.0;
 
 			/* Turn on delay, the paddles seem to read crazy at turn on. We also
