@@ -48,13 +48,10 @@ void init_ws_in_channels(void) {
 void handle_ws_drive_commands(float velocity, float bus_current, float motor_current) {
 
 	if (sc_get_timer() - ws_last_drive_command_time >= WS_TIME_BETWEEN_DRIVE_COMMANDS_MS) {
-
 		scandal_send_ws_drive_command(DC_DRIVE, velocity, motor_current);
 		scandal_send_ws_drive_command(DC_POWER, 0.0, bus_current);
 //		scandal_send_ws_id(DC_BASE, "TRIb", 4);
-
 		ws_last_drive_command_time = sc_get_timer();
-
 	}
 
 }

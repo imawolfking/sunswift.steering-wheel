@@ -45,7 +45,7 @@ extern int precharge_caught;
 static int last_speed_hold_time = 0;
 void speed_hold_handler() {
 	/* debouncing */
-	if (sc_get_timer() >= last_speed_hold_time + 50) {
+	if (sc_get_timer() >= last_speed_hold_time + 150) {
 		if (cruise) {
 			cruise = 0;
 			cruise_led(0);
@@ -71,7 +71,7 @@ void speed_hold_handler() {
 static int last_speed_up_time = 0;
 void speed_up_handler() {
 	/* debouncing */
-	if (sc_get_timer() - last_speed_up_time > 50) {
+	if (sc_get_timer() - last_speed_up_time > 150) {
 		if (cruise) {
 			cruise_velocity += kph2mps(0.5);
 			cruise_led_flash = 20;
@@ -87,7 +87,7 @@ void speed_up_handler() {
 static int last_speed_down_time = 0;
 void speed_down_handler() {
 	/* debouncing */
-	if (sc_get_timer() - last_speed_down_time > 50) {
+	if (sc_get_timer() - last_speed_down_time > 150) {
 		if (cruise) {
 			cruise_velocity -= kph2mps(0.5);
 			cruise_led_flash = 20;

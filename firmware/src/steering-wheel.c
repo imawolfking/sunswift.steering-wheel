@@ -148,7 +148,7 @@
 
 #define VELOCITY_MAX          40.0    /* max velocity in m/s */
 #define VELOCITY_REVERSE_MAX  -10.0   /* max velocity in m/s */
-#define WHEEL_DIAMETER        0.4826  /* wheel diameter in meters. currently = 16" wheel + 3" tyre * 2.54cm = 0.4826 */
+#define WHEEL_DIAMETER        0.53    /* wheel diameter in meters. */
 
 /* general variables */
 uint32_t  horn = 0;                               /* is the horn on */
@@ -186,6 +186,9 @@ sc_time_t forward_switch_on_time = 0;             /* the time someone pressed (a
 float     current_bus_voltage;                    /* the current bus voltage from the wavesculptor */
 float     throttle = 0;                           /* the current throttle paddle position 0.0 - 1.0 */
 float     regen = 0;                              /* the current regen paddle position 0.0 - 1.0 */
+
+uint32_t  left_paddle_max = 0;
+uint32_t  right_paddle_max = 0;
 
 /* indicator and scrutineering related variables */
 uint32_t  hazards = 1;                            /* are hazards on? */
@@ -360,11 +363,24 @@ int main(void) {
 	sc_time_t one_sec_timer = sc_get_timer(); /* Initialise the timer variable */
 	sc_time_t hundred_ms_timer = sc_get_timer(); /* Initialise the timer variable */
 	sc_time_t five_hundred_ms_timer = sc_get_timer(); /* Initialise the timer variable */
+	sc_time_t twelve_fifty_ms_timer = sc_get_timer(); /* Initialise the timer variable */
 
-	scandal_delay(100); /* wait for 'stuff' to settle after init */
+	scandal_delay(1000); /* wait for 'stuff' to settle after init */
+
+	ADC_Read(REGEN_ADC_CHANNEL);
+	ADC_Read(ACCELERATOR_ADC_CHANNEL);
+
+	scandal_delay(1000); /* wait for 'stuff' to settle after init */
+
+	left_paddle_max = ADCValue[REGEN_ADC_CHANNEL];
+	right_paddle_max = ADCValue[ACCELERATOR_ADC_CHANNEL];
 
 	/* This is the main loop, go for ever! */
 	while (1) {
+
+		uint32_t throttle_adc_read = 0;
+		uint32_t regen_adc_read = 0;
+
 		/* This checks whether there are pending requests from CAN, and sends a heartbeat message.
 		 * The heartbeat message encodes some data in the first 4 bytes of the CAN message, such as
 		 * the number of errors and the version of scandal */
@@ -375,19 +391,29 @@ int main(void) {
 			ADC_Read(REGEN_ADC_CHANNEL);
 			ADC_Read(ACCELERATOR_ADC_CHANNEL);
 
-			/* A bit of munging for top and bottom of the ranges on the paddles */
-			throttle = (float)(RIGHT_PADDLE_MAX -
-				((int32_t)ADCValue[ACCELERATOR_ADC_CHANNEL] - RIGHT_PADDLE_MIN)) /
-				(float)RIGHT_PADDLE_MAX;
+			regen_adc_read = ADCValue[REGEN_ADC_CHANNEL];
+			throttle_adc_read = ADCValue[ACCELERATOR_ADC_CHANNEL];
 
-			regen = (float)(LEFT_PADDLE_MAX -
-				((int32_t)ADCValue[REGEN_ADC_CHANNEL] - LEFT_PADDLE_MIN)) /
-				(float)LEFT_PADDLE_MAX;
+			if (regen_adc_read > left_paddle_max)
+				left_paddle_max = regen_adc_read;
+
+			if (throttle_adc_read > right_paddle_max)
+				right_paddle_max = throttle_adc_read;
+
+			/* A bit of munging for top and bottom of the ranges on the paddles */
+			throttle = (float)(((int32_t)throttle_adc_read)) /
+				(float)right_paddle_max;
+
+			regen = (float)(((int32_t)regen_adc_read)) /
+				(float)left_paddle_max;
+
+			regen = 1.0 - regen;
+			throttle = 1.0 - throttle;
 
 			/* If the throttle is below 5%, just zero it */
-			if (throttle < 0.05 && throttle > 0.0)
+			if (throttle < 0.10 && throttle > 0.0)
 				throttle = 0.0;
-			/* else we were a bit too gratuitous with our MAX and MIN values, and we 
+			/* else if we were a bit too gratuitous with our MAX and MIN values, and we 
 			 * got negative, set it to max */
 			else if (throttle < 0.0)
 				throttle = 1.0;
@@ -396,9 +422,9 @@ int main(void) {
 				throttle = 1.0;
 
 			/* If regen is below 5%, just zero it */
-			if (regen < 0.05 && regen > 0.0)
+			if (regen < 0.10 && regen > 0.0)
 				regen = 0.0;
-			/* else we were a bit too gratuitous with our MAX and MIN values, and we 
+			/* else if we were a bit too gratuitous with our MAX and MIN values, and we 
 			 * got negative, set it to max */
 			else if (regen < 0.0)
 				regen = 1.0;
@@ -417,19 +443,15 @@ int main(void) {
 				motor_current = 0.0;
 				bus_current = 0.0;
 
-				if (cruise && throttle > 0.0) {
-					cruise = 0;
-					cruise_led(0);
-				}
-
 				/* we want to move */
 				if (precharged && !brake && !cruise && throttle > 0.0) {
 					/* WS22 needs velocity in RPM */
 					if (wavesculptor_model == WS22) {
-						if (reverse)
+						if (reverse) {
 							set_velocity = mps2rpm(VELOCITY_REVERSE_MAX, WHEEL_DIAMETER);
-						else
+						} else {
 							set_velocity = mps2rpm(VELOCITY_MAX, WHEEL_DIAMETER);
+						}
 
 					/* WS22 needs velocity in meters per second */
 					} else if (wavesculptor_model == WS20) {
@@ -462,14 +484,14 @@ int main(void) {
 				}
 
 				/* regen */
-				if (precharged && regen > 0.0) {
+				if (precharged && regen > 0.10) {
 					/* come out of cruise mode */
 					cruise = 0;
 					cruise_led(0);
 
 					set_velocity = 0.0;
 					bus_current = 1.0;
-					motor_current = 1.0 - regen;
+					motor_current = regen;
 				}
 
 				/* Call the drive command handler.
@@ -478,21 +500,31 @@ int main(void) {
 				handle_ws_drive_commands(set_velocity, bus_current, motor_current);
 			}
 
+		if (sc_get_timer() > twelve_fifty_ms_timer + 1250) {
+			/* Update the timer */
+			twelve_fifty_ms_timer = sc_get_timer();
+			/* send out the human readable channels */
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, (int)(throttle*100.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
+
+			if (wavesculptor_model == WS22)
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, 
+						(int32_t)(mps2kph(rpm2mps(set_velocity, WHEEL_DIAMETER))*1000.0));
+			else if (wavesculptor_model == WS20)
+				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, (int32_t)(set_velocity*1000.0));
+
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current*1000.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current*1000.0));
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_WAVESCULPTOR_MODEL, wavesculptor_model);
+		}
+
 		/* Stuff to do at 1s intervals. Most of this stuff is sending out CAN messages */
 		if(sc_get_timer() >= one_sec_timer + 1000) {
 
 			/* Update the timer */
 			one_sec_timer = sc_get_timer();
-
-			/* send out the human readable channels */
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_THROTTLE, (int)(throttle*100.0));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REGEN, (int)(regen*100.0));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_CRUISE, cruise);
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_VELOCITY, mps2kph((int32_t)(set_velocity*100.0)));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_CURRENT,  (int32_t)(motor_current));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_SET_BUSCURRENT, (int32_t)(bus_current));
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_REVERSE, reverse);
-			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_WAVESCULPTOR_MODEL, wavesculptor_model);
 
 			/* send out the rear vision channel, this is every second so that we ensure
 			 * if we lose a message we don't get into a silly state */
@@ -567,7 +599,7 @@ int main(void) {
 			else if(discharging || !precharged)
 				scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, 0);
 #else
-			scandal_send_chanel(TELEM_LOW, STEERINGWHEEL_START, precharged);
+			scandal_send_channel(TELEM_LOW, STEERINGWHEEL_START, precharged);
 #endif
 
 			/* turn the brake lights on or off*/
