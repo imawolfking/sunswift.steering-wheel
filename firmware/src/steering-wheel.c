@@ -397,11 +397,14 @@ int main(void) {
 			regen_adc_read = ADCValue[REGEN_ADC_CHANNEL];
 			throttle_adc_read = ADCValue[ACCELERATOR_ADC_CHANNEL];
 
-			if (regen_adc_read > left_paddle_max)
-				left_paddle_max = regen_adc_read;
+			left_paddle_max = 800;
+			right_paddle_max = 800;
 
-			if (throttle_adc_read > right_paddle_max)
-				right_paddle_max = throttle_adc_read;
+			//if (regen_adc_read > left_paddle_max)
+				//left_paddle_max = regen_adc_read;
+
+			//if (throttle_adc_read > right_paddle_max)
+				//right_paddle_max = throttle_adc_read;
 
 			/* A bit of munging for top and bottom of the ranges on the paddles */
 			throttle = (float)(((int32_t)throttle_adc_read)) /
@@ -419,7 +422,7 @@ int main(void) {
 			/* else if we were a bit too gratuitous with our MAX and MIN values, and we 
 			 * got negative, set it to max */
 			else if (throttle < 0.0)
-				throttle = 1.0;
+				throttle = 0.0;
 			/* If the throttle is above 100%, make it 100% */
 			else if (throttle > 1.0)
 				throttle = 1.0;
@@ -430,7 +433,7 @@ int main(void) {
 			/* else if we were a bit too gratuitous with our MAX and MIN values, and we 
 			 * got negative, set it to max */
 			else if (regen < 0.0)
-				regen = 1.0;
+				regen = 0.0;
 			/* If regen is above 100%, make it 100% */
 			else if (regen > 1.0)
 				regen = 1.0;
