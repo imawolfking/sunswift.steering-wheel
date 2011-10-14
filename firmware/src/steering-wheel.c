@@ -397,8 +397,11 @@ int main(void) {
 			regen_adc_read = ADCValue[REGEN_ADC_CHANNEL];
 			throttle_adc_read = ADCValue[ACCELERATOR_ADC_CHANNEL];
 
-			left_paddle_max = 800;
-			right_paddle_max = 800;
+			left_paddle_max = 600;
+			right_paddle_max = 600;
+
+			regen_adc_read -= 200;
+			throttle_adc_read -= 200;
 
 			//if (regen_adc_read > left_paddle_max)
 				//left_paddle_max = regen_adc_read;
