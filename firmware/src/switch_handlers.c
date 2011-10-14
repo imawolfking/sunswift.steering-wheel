@@ -16,7 +16,7 @@ extern float current_velocity;
 extern int hazards;
 extern int horn;
 extern float set_velocity;
-extern int brake;
+extern uint32_t brake;
 extern int left_indicator;
 extern int right_indicator;
 extern int rear_vision;
@@ -188,23 +188,17 @@ void right_indicator_handler() {
 	GPIO_IntClear(RIGHT_INDICATOR_SWITCH_PORT, RIGHT_INDICATOR_SWITCH_BIT);
 }
 
-static int last_brake_time = 0;
 void brake_handler() {
-	/* debouncing */
-	if (sc_get_timer() - last_brake_time > 50) {
-		if (brake) {
-			brake = 0;
-		} else {
-			cruise = 0;
-			cruise_led(0);
-			brake = 1;
-		}
-	}
-
-	last_brake_time = sc_get_timer();
-
-	/* ack the interrupt */
+	/* ack the interrupt early, else we miss an edge */
 	GPIO_IntClear(BRAKE_PORT, BRAKE_BIT);
+	//if (sc_get_timer() - last_brake_time > 50) {
+	brake = GPIO_GetValue(BRAKE_PORT, BRAKE_BIT);
+	if(brake){
+		cruise = 0;
+		cruise_led(0);
+	}
+	//}
+
 }
 
 static int last_rear_vision_time = 0;
